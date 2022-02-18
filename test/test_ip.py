@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:5000/ip/1"
+# url = "http://127.0.0.1:5000/ip/1"
 # url = "http://192.168.0.215:5000/room/1"
 payload=[{
 	'name': 'test',
@@ -24,20 +24,10 @@ payload=[{
 count=1
 for p in payload:
 	url = f"http://127.0.0.1:5000/ip/{count}"
-	response = requests.put(url, data=p)
-	print(response.json())
 
 	response = requests.get(url)
 	print(response.json())
 
-	response = requests.patch(url, data=p,)
-	print(response.text)
-
-	response = requests.get(url)
-	print(response.json())
-	count+=1
-# response = requests.delete(url)
-# print(response)
 
 
 # class RoomList(Resource):

@@ -307,6 +307,7 @@ class AddIP(Resource):
 	@marshal_with(resource_fields)
 	def get(self):
 		args = ip_parser.parse_args()
+		print(args)
 		ip_exists = IPModel.query.filter_by(ip=args['IP']).first()
 		if ip_exists:
 			return ip_exists, 201
@@ -490,6 +491,11 @@ resource_fields = {
 	'humidity_relay_ip':fields.String,
 	'exhaust_relay_ip':fields.String,
 }
+resource_fields = {
+	'id': fields.Integer,
+	'ip': fields.String,
+	'name':fields.String,
+}
 
 climate_parameters_parser = reqparse.RequestParser()
 climate_parameters_parser.add_argument('name', type=str, help='Invalid Room', required=True)
@@ -538,9 +544,13 @@ class ClimateParameters(Resource):
 		results = ClimateModel.query.filter_by(climate_id=climate_parameter_id, room=rooms).first()
 		if results:
 			abort(409, message="Climate {} already exist".format(climate_parameter_id))
-		check_ips = db.session.query(IPModel).filter(IPModel.id.in_((int(args['co2_relay_ip']), int(args['humidity_relay_ip']), int(args['exhaust_relay_ip'])))).all()
+		check_ips = db.session.query(IPModel).filter(IPModel.ip.in_((args['co2_relay_ip'], args['humidity_relay_ip'], args['exhaust_relay_ip']))).all()
 		if not check_ips:
 			abort(409, message="Relay {} does not exist".format(check_ips))
+		for ips in check_ips:
+			ips.name = args['name']
+			db.session.add(ips)
+		db.session.commit()
 		climate = ClimateModel(climate_id=climate_parameter_id, name=args['name'], co2_parameters=args['co2_parameters'], humidity_parameters=args['humidity_parameters'],
 			temperature_parameters=args['temperature_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'],room=rooms)
 		db.session.add(climate)
