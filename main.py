@@ -17,6 +17,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from sqlalchemy import null
+from websocket import create_connection
 
 
 jobstores = {
@@ -600,6 +601,14 @@ class Climate(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
+		ws = create_connection("ws://127.0.0.1:8000/ws/socket-server/")
+		print("Sending 'Hello, World'...")
+		ws.send(json.dumps({"data":args}))
+		print("Sent")
+		print("Receiving...")
+		result = ws.recv()
+		print("Received '%s'" % result)
+		ws.close()
 		rooms = RoomModel.query.filter_by(id=1).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(1))
