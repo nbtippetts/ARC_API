@@ -132,15 +132,17 @@ db.create_all()
 
 def start_task(*args):
 	print(args)
-	url = f'http://{args[1]}/RELAY={args[0]}'
+	url = f'http://{args[1]}/io?v={args[0]}'
 	res = requests.get(url)
-	print(res.content)
+	print(res.status_code)
+	print(args)
 	# print(url)
 	return args
 def end_task(*args):
-	url = f'http://{args[1]}/RELAY={args[0]}'
+	url = f'http://{args[1]}/io?v={args[0]}'
 	res = requests.get(url)
-	print(res.content)
+	print(res.status_code)
+	print(args)
 	return args
 
 
@@ -276,10 +278,11 @@ class RoomIP(Resource):
 		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
+
 		ips = IPModel.query.filter_by(id=ip_id).first()
 		if not ips:
 			abort(409, message="IP {} doesn't exist, cannot update.".format(ip_id))
-		ips.name = args['name']
+		# ips.name = args['name']
 		ips.room_id = room_id
 		db.session.add(ips)
 		db.session.commit()
@@ -293,7 +296,6 @@ class RoomIP(Resource):
 		if not ips:
 			abort(409, message="IP {} doesn't exist, cannot update.".format(ip_id))
 
-		ips.name = 'unassigned'
 		ips.room_id = None
 		db.session.add(ips)
 		db.session.commit()
@@ -313,7 +315,9 @@ class AddIP(Resource):
 		if ip_exists:
 			return ip_exists, 201
 		else:
-			ip = IPModel(name=args['name'], ip = args['IP'])
+			ip_name = args['name']
+			print(ip_name)
+			ip = IPModel(name=ip_name, ip=args['IP'])
 			db.session.add(ip)
 			db.session.commit()
 			return ip, 201
@@ -404,7 +408,7 @@ class RelaySchedule(Resource):
 		ip_id = IPModel.query.filter_by(id=args['ip_id']).first()
 		if not ip_id:
 			abort(409, message="IP {} does not exist".format(ip_id))
-		ip_id.name = args['name']
+		# ip_id.name = args['name']
 		db.session.add(ip_id)
 		db.session.commit()
 		results = ClimateScheduleModel.query.filter_by(climate_schedule_id=schedule_id, IP=ip_id,room=rooms).first()
@@ -438,7 +442,7 @@ class RelaySchedule(Resource):
 
 		args['start_time']=datetime.strptime(args['start_time'], '%Y-%m-%d %H:%M')
 		args['end_time']=datetime.strptime(args['end_time'], '%Y-%m-%d %H:%M')
-		schedule.name = args['name']
+		# schedule.name = args['name']
 		schedule.start_time = args['start_time']
 		schedule.end_time = args['end_time']
 		schedule.how_often = args['how_often']
@@ -514,7 +518,7 @@ class ClimateParametersIPList(Resource):
 		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		check_ips = IPModel.query.filter_by(name='unassigned', room=rooms).all()
+		check_ips = IPModel.query.filter_by(room=rooms).all()
 		return check_ips, 200
 
 class ClimateParametersList(Resource):
@@ -545,13 +549,13 @@ class ClimateParameters(Resource):
 		results = ClimateModel.query.filter_by(climate_id=climate_parameter_id, room=rooms).first()
 		if results:
 			abort(409, message="Climate {} already exist".format(climate_parameter_id))
-		check_ips = db.session.query(IPModel).filter(IPModel.ip.in_((args['co2_relay_ip'], args['humidity_relay_ip'], args['exhaust_relay_ip']))).all()
-		if not check_ips:
-			abort(409, message="Relay {} does not exist".format(check_ips))
-		for ips in check_ips:
-			ips.name = args['name']
-			db.session.add(ips)
-		db.session.commit()
+		# check_ips = db.session.query(IPModel).filter(IPModel.ip.in_((args['co2_relay_ip'], args['humidity_relay_ip'], args['exhaust_relay_ip']))).all()
+		# if not check_ips:
+		# 	abort(409, message="Relay {} does not exist".format(check_ips))
+		# for ips in check_ips:
+		# 	ips.name = args['name']
+		# 	db.session.add(ips)
+		# db.session.commit()
 		climate = ClimateModel(climate_id=climate_parameter_id, name=args['name'], co2_parameters=args['co2_parameters'], humidity_parameters=args['humidity_parameters'],
 			temperature_parameters=args['temperature_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'],room=rooms)
 		db.session.add(climate)
@@ -568,7 +572,7 @@ class ClimateParameters(Resource):
 		if not climate:
 			abort(409, message="Climate Parameters {} doesn't exist, cannot update.".format(climate_parameter_id))
 
-		climate.name = args['name']
+		# climate.name = args['name']
 		climate.co2_parameters = args['co2_parameters']
 		climate.humidity_parameters = args['humidity_parameters']
 		climate.temperature_parameters = args['temperature_parameters']
@@ -618,20 +622,80 @@ class Climate(Resource):
 		climate = ClimateModel.query.filter_by(climate_id=1,room=rooms).first()
 		if not climate:
 			abort(409, message="Climate {} does not exist".format(1))
-		if args['co2'] <= climate.co2_parameters:
-			start_task('ON', climate.co2_relay_ip)
-		else:
-			end_task('OFF', climate.co2_relay_ip)
 
-		if args['humidity'] >= climate.humidity_parameters or args['temperature'] >= climate.temperature_parameters:
-			start_task('ON', climate.exhaust_relay_ip)
-		else:
-			end_task('OFF', climate.exhaust_relay_ip)
 
-		if args['humidity'] <= climate.humidity_parameters:
-			start_task('ON', climate.humidity_relay_ip)
-		else:
-			end_task('OFF', climate.humidity_relay_ip)
+		# url = f'http://{climate.co2_relay_ip}/io?v=low'
+		# url = f'http://{climate.co2_relay_ip}/io?v=low'
+		# # url = f'http://{climate.co2_relay_ip}/io?v=low'
+		# url = f'http://{climate.co2_relay_ip}/io?v=low'
+
+		try:
+			if args['co2'] <= climate.co2_parameters:
+				co2_url = f'http://{climate.co2_relay_ip}/io?v=low'
+				# start_task('low', climate.co2_relay_ip)
+				print(co2_url)
+				co2_res = requests.get(co2_url)
+				print(co2_res.status_code)
+			elif args['co2'] >= climate.co2_parameters:
+				co2_url = f'http://{climate.co2_relay_ip}/io?v=high'
+				print(co2_url)
+				co2_res = requests.get(co2_url)
+				print(co2_res.status_code)
+				# end_task('high', climate.co2_relay_ip)
+			else:
+				print('co2 do nothing')
+		except Exception as e:
+			print(e)
+			pass
+
+		try:
+			if args['temperature'] >= climate.temperature_parameters:
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
+				print(exhaust_url)
+				exhaust_res = requests.get(exhaust_url)
+				print(exhaust_res.status_code)
+				# start_task('low', climate.exhaust_relay_ip)
+			elif args['temperature'] <= climate.temperature_parameters and args['humidity'] >= climate.humidity_parameters:
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
+				print(exhaust_url)
+				exhaust_res = requests.get(exhaust_url)
+				print(exhaust_res.status_code)
+			elif args['temperature'] <= climate.temperature_parameters:
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=high'
+				print(exhaust_url)
+				exhaust_res = requests.get(exhaust_url)
+				print(exhaust_res.status_code)
+				# end_task('high', climate.exhaust_relay_ip)
+			else:
+				print('temp do nothing')
+		except Exception as e:
+			print(e)
+			pass
+			# if args['humidity'] >= climate.humidity_parameters:
+			# url = f'http://{climate.co2_relay_ip}/io?v=low'
+				# start_task('low', climate.exhaust_relay_ip)
+			# else:
+			# url = f'http://{climate.co2_relay_ip}/io?v=high'
+				# end_task('high', climate.exhaust_relay_ip)
+		try:
+			if args['humidity'] <= climate.humidity_parameters:
+				humidity_url = f'http://{climate.humidity_relay_ip}/io?v=low'
+				print(humidity_url)
+				humidity_res = requests.get(humidity_url)
+				print(humidity_res.status_code)
+				# start_task('low', climate.humidity_relay_ip)
+			elif args['humidity'] >= climate.humidity_parameters:
+				humidity_url = f'http://{climate.humidity_relay_ip}/io?v=high'
+				print(humidity_url)
+				humidity_res = requests.get(humidity_url)
+				print(humidity_res.status_code)
+				# end_task('high', climate.humidity_relay_ip)
+			else:
+				print('humidity do nothing')
+
+		except Exception as e:
+			print(e)
+			pass
 
 		return 'SUCCESS', 200
 
