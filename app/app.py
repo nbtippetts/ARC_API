@@ -19,7 +19,7 @@ api = Api(app)
 # app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
 # 	urllib.parse.quote_plus("@Wicked2009"))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}/{}'.format(
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
 	os.getenv('DB_USER', 'flask'),
 	os.getenv('DB_PASSWORD', ''),
 	os.getenv('DB_HOST', 'mysql'),
@@ -29,7 +29,7 @@ db = SQLAlchemy(app)
 
 jobstores = {
 	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	'default': SQLAlchemyJobStore(url='mysql+pymysql://{}:{}@{}/{}'.format(
+	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
 		os.getenv('DB_USER', 'flask'),
 		os.getenv('DB_PASSWORD', ''),
 		os.getenv('DB_HOST', 'mysql'),
