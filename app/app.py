@@ -11,10 +11,30 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from sqlalchemy import null
 from websocket import create_connection
+import os
 
+
+app = Flask(__name__)
+api = Api(app)
+# app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
+# 	urllib.parse.quote_plus("@Wicked2009"))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}/{}'.format(
+	os.getenv('DB_USER', 'flask'),
+	os.getenv('DB_PASSWORD', ''),
+	os.getenv('DB_HOST', 'mysql'),
+	os.getenv('DB_NAME', 'flask')
+)
+db = SQLAlchemy(app)
 
 jobstores = {
-	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
+	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	'default': SQLAlchemyJobStore(url='mysql+pymysql://{}:{}@{}/{}'.format(
+		os.getenv('DB_USER', 'flask'),
+		os.getenv('DB_PASSWORD', ''),
+		os.getenv('DB_HOST', 'mysql'),
+		os.getenv('DB_NAME', 'flask')
+	))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -25,12 +45,6 @@ job_defaults = {
 	'max_instances': 3
 }
 appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores, executors=executors, job_defaults=job_defaults, timezone=utc)
-
-app = Flask(__name__)
-api = Api(app)
-# app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-db = SQLAlchemy(app)
 appscheduler.start()
 # appscheduler.shutdown()
 
@@ -121,7 +135,10 @@ class NoteBookModel(db.Model):
 		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
 	)
 
-db.create_all()
+
+@app.before_first_request
+def create_tables():
+	db.create_all()
 
 def start_task(*args):
 	print(args)
@@ -425,9 +442,9 @@ class RelaySchedule(Resource):
 		# appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron',second=5, args=['low',ip.ip],replace_existing=True)
 		# appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron',second=30, args=['high',ip.ip], replace_existing=True)
 		appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron',
-		                     day_of_week=args['how_often'], hour=start_hour, minute=start_minute, args=['low', schedule.IP.ip], replace_existing=True)
+							 day_of_week=args['how_often'], hour=start_hour, minute=start_minute, args=['low', schedule.IP.ip], replace_existing=True)
 		appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron',
-		                     day_of_week=args['how_often'], hour=end_hour, minute=end_minute, args=['high', schedule.IP.ip], replace_existing=True)
+							 day_of_week=args['how_often'], hour=end_hour, minute=end_minute, args=['high', schedule.IP.ip], replace_existing=True)
 
 		return 'Successfuly Updated', 204
 
@@ -589,11 +606,13 @@ class Climate(Resource):
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
 		ws = create_connection(
-			f"ws://127.0.0.1:8000/ws/socket-server/")
+			f"ws://192.168.1.37:8000/ws/socket-server/")
+		# ws = create_connection(
+		# 	f"ws://127.0.0.1:8000/ws/socket-server/")
 		ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 		result = ws.recv()
 		print("Received '%s'" % result)
-		# ws.close()
+		ws.close()
 		# climate_log = ClimateLogModel(co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], room=rooms)
 		# db.session.add(climate_log)
 		# db.session.commit()
