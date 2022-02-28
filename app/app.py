@@ -605,82 +605,86 @@ class Climate(Resource):
 		ips = IPModel.query.filter_by(ip=request.remote_addr).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
-		ws = create_connection(
-			f"ws://192.168.1.37:8000/ws/socket-server/")
-		# ws = create_connection(
-		# 	f"ws://127.0.0.1:8000/ws/socket-server/")
-		ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
-		result = ws.recv()
-		print("Received '%s'" % result)
-		ws.close()
+		try:
+			ws = create_connection(
+				f"ws://192.168.1.31:8000/ws/socket-server/")
+			# ws = create_connection(
+			# 	f"ws://127.0.0.1:8000/ws/socket-server/")
+			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
+			result = ws.recv()
+			print("Received '%s'" % result)
+			ws.close()
+		except Exception as e:
+			print(e)
+			pass
 		# climate_log = ClimateLogModel(co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], room=rooms)
 		# db.session.add(climate_log)
 		# db.session.commit()
-		# climate = ClimateModel.query.filter_by(IP=ips).first()
-		# if not climate:
-		# 	abort(409, message="Climate {} does not exist".format(1))
+		climate = ClimateModel.query.filter_by(IP=ips).first()
+		if not climate:
+			abort(409, message="Climate {} does not exist".format(1))
 
-		# try:
-		# 	if args['co2'] <= climate.co2_parameters:
-		# 		co2_url = f'http://{climate.co2_relay_ip}/io?v=low'
-		# 		# start_task('low', climate.co2_relay_ip)
-		# 		print(co2_url)
-		# 		co2_res = requests.get(co2_url)
-		# 		print(co2_res.status_code)
-		# 	elif args['co2'] >= climate.co2_parameters:
-		# 		co2_url = f'http://{climate.co2_relay_ip}/io?v=high'
-		# 		print(co2_url)
-		# 		co2_res = requests.get(co2_url)
-		# 		print(co2_res.status_code)
-		# 		# end_task('high', climate.co2_relay_ip)
-		# 	else:
-		# 		print('co2 do nothing')
-		# except Exception as e:
-		# 	print(e)
-		# 	pass
+		try:
+			if args['co2'] <= climate.co2_parameters:
+				co2_url = f'http://{climate.co2_relay_ip}/io?v=low'
+				# start_task('low', climate.co2_relay_ip)
+				print(co2_url)
+				co2_res = requests.get(co2_url)
+				print(co2_res.status_code)
+			elif args['co2'] >= climate.co2_parameters:
+				co2_url = f'http://{climate.co2_relay_ip}/io?v=high'
+				print(co2_url)
+				co2_res = requests.get(co2_url)
+				print(co2_res.status_code)
+				# end_task('high', climate.co2_relay_ip)
+			else:
+				print('co2 do nothing')
+		except Exception as e:
+			print(e)
+			pass
 
-		# try:
-		# 	if args['temperature'] >= climate.temperature_parameters:
-		# 		exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
-		# 		print(exhaust_url)
-		# 		exhaust_res = requests.get(exhaust_url)
-		# 		print(exhaust_res.status_code)
-		# 		# start_task('low', climate.exhaust_relay_ip)
-		# 	elif args['temperature'] <= climate.temperature_parameters and args['humidity'] >= climate.humidity_parameters:
-		# 		exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
-		# 		print(exhaust_url)
-		# 		exhaust_res = requests.get(exhaust_url)
-		# 		print(exhaust_res.status_code)
-		# 	elif args['temperature'] <= climate.temperature_parameters:
-		# 		exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=high'
-		# 		print(exhaust_url)
-		# 		exhaust_res = requests.get(exhaust_url)
-		# 		print(exhaust_res.status_code)
-		# 		# end_task('high', climate.exhaust_relay_ip)
-		# 	else:
-		# 		print('temp do nothing')
-		# except Exception as e:
-		# 	print(e)
-		# 	pass
-		# try:
-		# 	if args['humidity'] <= climate.humidity_parameters:
-		# 		humidity_url = f'http://{climate.humidity_relay_ip}/io?v=low'
-		# 		print(humidity_url)
-		# 		humidity_res = requests.get(humidity_url)
-		# 		print(humidity_res.status_code)
-		# 		# start_task('low', climate.humidity_relay_ip)
-		# 	elif args['humidity'] >= climate.humidity_parameters:
-		# 		humidity_url = f'http://{climate.humidity_relay_ip}/io?v=high'
-		# 		print(humidity_url)
-		# 		humidity_res = requests.get(humidity_url)
-		# 		print(humidity_res.status_code)
-		# 		# end_task('high', climate.humidity_relay_ip)
-		# 	else:
-		# 		print('humidity do nothing')
+		try:
+			if args['temperature'] >= climate.temperature_parameters:
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
+				print(exhaust_url)
+				exhaust_res = requests.get(exhaust_url)
+				print(exhaust_res.status_code)
+				# start_task('low', climate.exhaust_relay_ip)
+			elif args['temperature'] <= climate.temperature_parameters and args['humidity'] >= climate.humidity_parameters:
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
+				print(exhaust_url)
+				exhaust_res = requests.get(exhaust_url)
+				print(exhaust_res.status_code)
+			elif args['temperature'] <= climate.temperature_parameters:
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=high'
+				print(exhaust_url)
+				exhaust_res = requests.get(exhaust_url)
+				print(exhaust_res.status_code)
+				# end_task('high', climate.exhaust_relay_ip)
+			else:
+				print('temp do nothing')
+		except Exception as e:
+			print(e)
+			pass
+		try:
+			if args['humidity'] <= climate.humidity_parameters:
+				humidity_url = f'http://{climate.humidity_relay_ip}/io?v=low'
+				print(humidity_url)
+				humidity_res = requests.get(humidity_url)
+				print(humidity_res.status_code)
+				# start_task('low', climate.humidity_relay_ip)
+			elif args['humidity'] >= climate.humidity_parameters:
+				humidity_url = f'http://{climate.humidity_relay_ip}/io?v=high'
+				print(humidity_url)
+				humidity_res = requests.get(humidity_url)
+				print(humidity_res.status_code)
+				# end_task('high', climate.humidity_relay_ip)
+			else:
+				print('humidity do nothing')
 
-		# except Exception as e:
-		# 	print(e)
-		# 	pass
+		except Exception as e:
+			print(e)
+			pass
 
 		return 'SUCCESS', 200
 
