@@ -1,40 +1,42 @@
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from pytz import utc
+from datetime import datetime, timezone
+from pytz import utc, all_timezones
 import requests
 import json
 import urllib.parse
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
+from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import null
 from websocket import create_connection
 import os
+from time import gmtime, strftime
 
 
 app = Flask(__name__)
 api = Api(app)
 # app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
-# 	urllib.parse.quote_plus("@Wicked2009"))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-	os.getenv('DB_USER', 'flask'),
-	os.getenv('DB_PASSWORD', ''),
-	os.getenv('DB_HOST', 'mysql'),
-	os.getenv('DB_NAME', 'flask')
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
+	urllib.parse.quote_plus("@Wicked2009"))
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+# 	os.getenv('DB_USER', 'flask'),
+# 	os.getenv('DB_PASSWORD', ''),
+# 	os.getenv('DB_HOST', 'mariadb'),
+# 	os.getenv('DB_NAME', 'flask')
+# )
 db = SQLAlchemy(app)
 
 jobstores = {
-	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-		os.getenv('DB_USER', 'flask'),
-		os.getenv('DB_PASSWORD', ''),
-		os.getenv('DB_HOST', 'mysql'),
-		os.getenv('DB_NAME', 'flask')
-	))
+	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+	# 	os.getenv('DB_USER', 'flask'),
+	# 	os.getenv('DB_PASSWORD', ''),
+	# 	os.getenv('DB_HOST', 'mariadb'),
+	# 	os.getenv('DB_NAME', 'flask')
+	# ))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -44,7 +46,12 @@ job_defaults = {
 	'coalesce': False,
 	'max_instances': 3
 }
-appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores, executors=executors, job_defaults=job_defaults, timezone=utc)
+
+# print('Timezones')
+# for timeZone in all_timezones:
+#     print(timeZone)
+
+appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores,executors=executors, job_defaults=job_defaults, timezone="US/Mountain")
 appscheduler.start()
 # appscheduler.shutdown()
 
@@ -66,6 +73,7 @@ class IPModel(db.Model):
 	__tablename__ = 'IP'
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(20), nullable=False)
+	state = db.Column(db.Boolean, default=False, nullable=False)
 	ip = db.Column(db.String(20), nullable=False)
 	climate_schedule = db.relationship('ClimateScheduleModel', backref='IP', lazy='joined')
 	climate = db.relationship('ClimateModel', backref='IP', lazy='joined')
@@ -142,23 +150,33 @@ def create_tables():
 
 def start_task(*args):
 	print(args)
-	url = f'http://{args[1]}/io?v={args[0]}'
+	url = f'http://{args[1]}/?v={args[0]}'
 	res = requests.get(url)
-	print(res.status_code)
-	print(args)
+	ip_state = IPModel.query.filter_by(ip=args[1]).first()
+	if res.status_code == 200:
+		ip_state.state=True
+	else:
+		ip_state.state=False
+
+	db.session.add(ip_state)
+	db.session.commit()
 	# print(url)
 	return args
 def end_task(*args):
-	url = f'http://{args[1]}/io?v={args[0]}'
+	url = f'http://{args[1]}/?v={args[0]}'
 	res = requests.get(url)
-	print(res.status_code)
-	print(args)
+	ip_state = IPModel.query.filter_by(ip=args[1]).first()
+	if res.status_code == 200:
+		ip_state.state = False
+		db.session.add(ip_state)
+		db.session.commit()
 	return args
 
 
 ip_marshaller = {
 	'id': fields.Integer,
 	"name": fields.String,
+	"state": fields.Boolean,
 	"ip": fields.String
 }
 climate_schedule_marshaller = {
@@ -408,10 +426,12 @@ class RelaySchedule(Resource):
 
 		end_hour = args['end_time'].strftime("%H")
 		end_minute = args['end_time'].strftime("%M")
-		appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron',second=5, args=['low',schedule.IP.ip],replace_existing=True)
-		appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron',second=30, args=['high',schedule.IP.ip], replace_existing=True)
-		# appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron', day_of_week=args['how_often'],hour=start_hour, minute=start_minute, args=['low', schedule.IP.ip], replace_existing=True)
-		# appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron', day_of_week=args['how_often'], hour=end_hour, minute=end_minute, args=['high', schedule.IP.ip], replace_existing=True)
+		# appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron',second=5, args=['low',schedule.IP.ip],replace_existing=True)
+		# appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron',second=30, args=['high',schedule.IP.ip], replace_existing=True)
+		start_triggers = CronTrigger(day_of_week=args['how_often'],hour=start_hour, minute=start_minute)
+		end_triggers = CronTrigger(day_of_week=args['how_often'],hour=end_hour, minute=end_minute)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
 		return schedule, 201
 
 	@marshal_with(resource_fields)
@@ -441,11 +461,12 @@ class RelaySchedule(Resource):
 
 		# appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron',second=5, args=['low',ip.ip],replace_existing=True)
 		# appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron',second=30, args=['high',ip.ip], replace_existing=True)
-		appscheduler.add_job(id=f'{schedule_id}-start', func=start_task, trigger='cron',
-							 day_of_week=args['how_often'], hour=start_hour, minute=start_minute, args=['low', schedule.IP.ip], replace_existing=True)
-		appscheduler.add_job(id=f'{schedule_id}-end', func=end_task, trigger='cron',
-							 day_of_week=args['how_often'], hour=end_hour, minute=end_minute, args=['high', schedule.IP.ip], replace_existing=True)
-
+		start_triggers = CronTrigger(
+			day_of_week=args['how_often'], hour=start_hour, minute=start_minute)
+		end_triggers = CronTrigger(
+			day_of_week=args['how_often'], hour=end_hour, minute=end_minute)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
 		return 'Successfuly Updated', 204
 
 	def delete(self,room_id,schedule_id):
@@ -626,17 +647,24 @@ class Climate(Resource):
 
 		try:
 			if args['co2'] <= climate.co2_parameters:
-				co2_url = f'http://{climate.co2_relay_ip}/io?v=low'
-				# start_task('low', climate.co2_relay_ip)
+				co2_url = f'http://{climate.co2_relay_ip}/?v=low'
 				print(co2_url)
 				co2_res = requests.get(co2_url)
-				print(co2_res.status_code)
+				if co2_res.status_code == 200:
+					ips.state = True
+				else:
+					ips.state = False
+
+				db.session.add(ips)
+				db.session.commit()
 			elif args['co2'] >= climate.co2_parameters:
-				co2_url = f'http://{climate.co2_relay_ip}/io?v=high'
+				co2_url = f'http://{climate.co2_relay_ip}/?v=high'
 				print(co2_url)
 				co2_res = requests.get(co2_url)
-				print(co2_res.status_code)
-				# end_task('high', climate.co2_relay_ip)
+				if co2_res.status_code == 200:
+					ips.state = False
+					db.session.add(ips)
+					db.session.commit()
 			else:
 				print('co2 do nothing')
 		except Exception as e:
@@ -645,21 +673,42 @@ class Climate(Resource):
 
 		try:
 			if args['temperature'] >= climate.temperature_parameters:
-				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=low'
 				print(exhaust_url)
 				exhaust_res = requests.get(exhaust_url)
 				print(exhaust_res.status_code)
+				exhaust_res = requests.get(co2_url)
+				if exhaust_res.status_code == 200:
+					ips.state = True
+				else:
+					ips.state = False
+
+				db.session.add(ips)
+				db.session.commit()
 				# start_task('low', climate.exhaust_relay_ip)
 			elif args['temperature'] <= climate.temperature_parameters and args['humidity'] >= climate.humidity_parameters:
-				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=low'
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=low'
 				print(exhaust_url)
 				exhaust_res = requests.get(exhaust_url)
 				print(exhaust_res.status_code)
+				exhaust_res = requests.get(co2_url)
+				if exhaust_res.status_code == 200:
+					ips.state = True
+				else:
+					ips.state = False
+
+				db.session.add(ips)
+				db.session.commit()
 			elif args['temperature'] <= climate.temperature_parameters:
-				exhaust_url = f'http://{climate.exhaust_relay_ip}/io?v=high'
+				exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=high'
 				print(exhaust_url)
 				exhaust_res = requests.get(exhaust_url)
 				print(exhaust_res.status_code)
+				exhaust_res = requests.get(co2_url)
+				if exhaust_res.status_code == 200:
+					ips.state = False
+					db.session.add(ips)
+					db.session.commit()
 				# end_task('high', climate.exhaust_relay_ip)
 			else:
 				print('temp do nothing')
@@ -668,16 +717,28 @@ class Climate(Resource):
 			pass
 		try:
 			if args['humidity'] <= climate.humidity_parameters:
-				humidity_url = f'http://{climate.humidity_relay_ip}/io?v=low'
+				humidity_url = f'http://{climate.humidity_relay_ip}/?v=low'
 				print(humidity_url)
 				humidity_res = requests.get(humidity_url)
 				print(humidity_res.status_code)
+				if humidity_res.status_code == 200:
+					ips.state = True
+				else:
+					ips.state = False
+
+				db.session.add(ips)
+				db.session.commit()
 				# start_task('low', climate.humidity_relay_ip)
 			elif args['humidity'] >= climate.humidity_parameters:
-				humidity_url = f'http://{climate.humidity_relay_ip}/io?v=high'
+				humidity_url = f'http://{climate.humidity_relay_ip}/?v=high'
 				print(humidity_url)
 				humidity_res = requests.get(humidity_url)
 				print(humidity_res.status_code)
+				if humidity_res.status_code == 200:
+					ips.state = False
+					db.session.add(ips)
+					db.session.commit()
+
 				# end_task('high', climate.humidity_relay_ip)
 			else:
 				print('humidity do nothing')
@@ -689,6 +750,31 @@ class Climate(Resource):
 		return 'SUCCESS', 200
 
 
+relay_parser = reqparse.RequestParser()
+relay_parser.add_argument('ip', type=str, help='Invalid IP')
+relay_parser.add_argument('state', type=str, help='Invalid State')
+class RelayControl(Resource):
+	def get(self):
+		args = relay_parser.parse_args()
+		ips = IPModel.query.filter_by(ip=args["ip"]).first()
+		if not ips:
+			abort(409, message="IP {} does not exist".format(1))
+		relay_url = f'http://{args["ip"]}/?v={args["state"]}'
+		relay_res = requests.get(relay_url)
+		if relay_res.status_code == 200:
+			if args["state"] == 'low':
+				ips.state = True
+			elif args["state"] == 'high':
+				ips.state = False
+		else:
+			ips.state = False
+
+		db.session.add(ips)
+		db.session.commit()
+		return 'SUCCESS', 200
+
+
+
 api.add_resource(Room, '/room/<int:room_id>')
 api.add_resource(RoomList, '/rooms')
 
@@ -696,6 +782,8 @@ api.add_resource(AddIP, '/ip')
 api.add_resource(RoomIP, '/room/<int:room_id>/ip/<int:ip_id>')
 api.add_resource(IPRoomList, '/room/<int:room_id>/ips')
 api.add_resource(IPList, '/all_ips')
+
+api.add_resource(RelayControl, '/relay_control/')
 
 api.add_resource(RelaySchedule, '/room/<int:room_id>/relayschedule/<int:schedule_id>')
 api.add_resource(RoomRelayScheduleList, '/room/<int:room_id>/relayschedule')
