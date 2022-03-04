@@ -19,24 +19,24 @@ from time import gmtime, strftime
 app = Flask(__name__)
 api = Api(app)
 # app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
-# 	urllib.parse.quote_plus("@Wicked2009"))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-	os.getenv('DB_USER', 'flask'),
-	os.getenv('DB_PASSWORD', ''),
-	os.getenv('DB_HOST', 'mariadb'),
-	os.getenv('DB_NAME', 'flask')
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
+	urllib.parse.quote_plus("@Wicked2009"))
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+# 	os.getenv('DB_USER', 'flask'),
+# 	os.getenv('DB_PASSWORD', ''),
+# 	os.getenv('DB_HOST', 'mariadb'),
+# 	os.getenv('DB_NAME', 'flask')
+# )
 db = SQLAlchemy(app)
 
 jobstores = {
-	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-		os.getenv('DB_USER', 'flask'),
-		os.getenv('DB_PASSWORD', ''),
-		os.getenv('DB_HOST', 'mariadb'),
-		os.getenv('DB_NAME', 'flask')
-	))
+	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+	# 	os.getenv('DB_USER', 'flask'),
+	# 	os.getenv('DB_PASSWORD', ''),
+	# 	os.getenv('DB_HOST', 'mariadb'),
+	# 	os.getenv('DB_NAME', 'flask')
+	# ))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -60,6 +60,7 @@ class RoomModel(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(100), nullable=False)
 	climate_schedule = db.relationship('ClimateScheduleModel', backref='room',lazy='joined')
+	climate_interval = db.relationship('ClimateIntervalModel', backref='room',lazy='joined')
 	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='room',lazy='joined')
 	climate = db.relationship('ClimateModel', backref='room',lazy='joined')
 	climate_log = db.relationship('ClimateLogModel', backref='room',lazy='joined')
@@ -76,6 +77,7 @@ class IPModel(db.Model):
 	state = db.Column(db.Boolean, default=False, nullable=False)
 	ip = db.Column(db.String(20), nullable=False)
 	climate_schedule = db.relationship('ClimateScheduleModel', backref='IP', lazy='joined')
+	climate_interval = db.relationship('ClimateIntervalModel', backref='IP', lazy='joined')
 	climate = db.relationship('ClimateModel', backref='IP', lazy='joined')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
@@ -88,6 +90,19 @@ class ClimateScheduleModel(db.Model):
 	start_time = db.Column(db.DateTime, nullable=False)
 	end_time = db.Column(db.DateTime, nullable=False)
 	how_often = db.Column(db.String(20), nullable=False)
+	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
+	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
+	timestamp = db.Column(
+		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+	)
+class ClimateIntervalModel(db.Model):
+	__tablename__ = 'climate_interval'
+	climate_interval_id=db.Column(db.Integer, primary_key = True)
+	name = db.Column(db.String(100), nullable=False)
+	interval_hour=db.Column(db.Integer, default=0, nullable=False)
+	interval_minute=db.Column(db.Integer, default=0, nullable=False)
+	duration_hour=db.Column(db.Integer, default=0, nullable = False)
+	duration_minute=db.Column(db.Integer, default=0, nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
@@ -187,6 +202,16 @@ climate_schedule_marshaller = {
 	"IP": fields.List(fields.Nested(ip_marshaller))
 }
 
+climate_interval_marshaller = {
+	'climate_interval_id': fields.Integer,
+	'name': fields.String,
+	'interval_hour': fields.Integer,
+	'interval_minute': fields.Integer,
+	'duration_hour': fields.Integer,
+	'duration_minute': fields.Integer,
+	"IP": fields.List(fields.Nested(ip_marshaller))
+}
+
 climate_marshaller = {
 	'climate_id': fields.Integer,
 	'name': fields.String,
@@ -202,6 +227,7 @@ resource_fields = {
 	'id': fields.Integer,
 	'name': fields.String,
 	'climate_schedule': fields.Nested(climate_schedule_marshaller),
+	'climate_interval': fields.Nested(climate_interval_marshaller),
 	'climate_schedule_log': fields.Nested(climate_schedule_marshaller),
 	'climate': fields.Nested(climate_marshaller),
 	'climate_log': fields.Nested(climate_schedule_marshaller),
@@ -494,6 +520,157 @@ class RelaySchedule(Resource):
 
 
 resource_fields = {
+	'climate_interval_id': fields.Integer,
+	'room_id': fields.Integer,
+	'name': fields.String,
+	'interval_hour': fields.Integer,
+	'interval_minute': fields.Integer,
+	'duration_hour': fields.Integer,
+	'duration_minute': fields.Integer,
+	'ip_id': fields.Integer,
+}
+# Define parser and request args
+interval_parser = reqparse.RequestParser()
+interval_parser.add_argument('name', type=str, help='What are you trying to create a schedule for?', required=True)
+interval_parser.add_argument('interval_hour', type=int, help='Invalid Interval Hour', required=False)
+interval_parser.add_argument('interval_minute', type=int,help='Invalid Interval Minute', required=False)
+interval_parser.add_argument('duration_hour', type=int, help='Invalid Duration Hour', required=False)
+interval_parser.add_argument('duration_minute', type=int,help='Invalid Duration Minute', required=False)
+interval_parser.add_argument('ip_id', type=int, help='Invalid IP', required=True)
+
+
+class RelayIntervalList(Resource):
+	@marshal_with(resource_fields)
+	def get(self):
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			print(job.trigger)
+
+		results = ClimateIntervalModel.query.all()
+		return results, 200
+
+class RoomRelayIntervalList(Resource):
+	@marshal_with(resource_fields)
+	def get(self,room_id):
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			print(job.trigger)
+		rooms = RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		results = ClimateIntervalModel.query.filter_by(room=rooms).all()
+		return results, 200
+
+class RelayInterval(Resource):
+	@marshal_with(resource_fields)
+	def get(self,room_id,interval_id):
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			print(job.trigger)
+		rooms = RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		results = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id,room=rooms).first()
+		return results, 200
+
+	@marshal_with(resource_fields)
+	def put(self,room_id,interval_id):
+		args = interval_parser.parse_args()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		ip_id = IPModel.query.filter_by(id=args['ip_id']).first()
+		if not ip_id:
+			abort(409, message="IP {} does not exist".format(ip_id))
+		db.session.add(ip_id)
+		db.session.commit()
+		results = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id, IP=ip_id,room=rooms).first()
+		if results:
+			abort(409, message="Interval {} already exist".format(interval_id))
+		interval = ClimateIntervalModel(climate_interval_id=interval_id, name=args['name'], interval_hour=args['interval_hour'],interval_minute=args['interval_minute'],duration_hour=args['duration_hour'],duration_minute=args['duration_minute'], IP=ip_id, room=rooms)
+		db.session.add(interval)
+		db.session.commit()
+
+		if args['interval_hour'] == 0:
+			interval_hour='*'
+		else:
+			interval_hour=f"*/{str(args['interval_hour'])}"
+		if args['interval_minute'] == 0:
+			interval_minute='*'
+		else:
+			interval_minute=f"*/{str(args['interval_minute'])}"
+
+		if args['duration_hour'] == 0:
+			duration_hour = '*'
+		else:
+			duration_hour = f"*/{str(args['duration_hour'])}"
+		if args['duration_minute'] == 0:
+			duration_minute = '*'
+		else:
+			duration_minute = f"*/{str(args['duration_minute'])}"
+
+		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
+		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
+		appscheduler.add_job(start_task,start_triggers,id=f'{interval_id}-interval-start',args=['low',interval.IP.ip],replace_existing=True)
+		appscheduler.add_job(end_task,end_triggers,id=f'{interval_id}-interval-end',args=['high', interval.IP.ip], replace_existing=True)
+		return interval, 201
+
+	@marshal_with(resource_fields)
+	def patch(self,room_id,interval_id):
+		args = interval_parser.parse_args()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		interval = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id,room=rooms).first()
+		if not interval:
+			abort(409, message="Interval {} doesn't exist, cannot update.".format(interval_id))
+
+		# schedule.name = args['name']
+		interval.interval_hour = args['interval_hour']
+		interval.interval_minute = args['interval_minute']
+		interval.duration_hour = args['duration_hour']
+		interval.duration_minute = args['duration_minute']
+		db.session.add(interval)
+		db.session.commit()
+
+		interval_hour = f"*/{str(args['interval_hour'])}"
+		interval_minute = f"*/{str(args['interval_minute'])}"
+		duration_hour = f"*/{str(args['duration_hour'])}"
+		duration_minute = f"*/{str(args['duration_minute'])}"
+		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
+		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
+		return 'Successfuly Updated', 204
+
+	def delete(self,room_id,interval_id):
+		rooms = RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		interval = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id, room=rooms).first()
+		if not interval:
+			abort(409, message="Interval {} doesn't exist, cannot Delete.".format(interval_id))
+		db.session.delete(interval)
+		db.session.commit()
+
+		start_job = appscheduler.get_job(f'{interval_id}-start')
+		if not start_job:
+			abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id))
+
+		end_job = appscheduler.get_job(f'{interval_id}-end')
+		if not end_job:
+			abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id))
+
+		appscheduler.remove_job(f'{interval_id}-interval-start')
+		appscheduler.remove_job(f'{interval_id}-interval-end')
+
+		return 'SUCCESS', 204
+
+
+resource_fields = {
 	'climate_id': fields.Integer,
 	'room_id': fields.Integer,
 	'name':fields.String,
@@ -565,13 +742,7 @@ class ClimateParameters(Resource):
 		results = ClimateModel.query.filter_by(climate_id=climate_parameter_id, room=rooms).first()
 		if results:
 			abort(409, message="Climate {} already exist".format(climate_parameter_id))
-		# check_ips = db.session.query(IPModel).filter(IPModel.ip.in_((args['co2_relay_ip'], args['humidity_relay_ip'], args['exhaust_relay_ip']))).all()
-		# if not check_ips:
-		# 	abort(409, message="Relay {} does not exist".format(check_ips))
-		# for ips in check_ips:
-		# 	ips.name = args['name']
-		# 	db.session.add(ips)
-		# db.session.commit()
+
 		climate = ClimateModel(climate_id=climate_parameter_id, name=args['name'], co2_parameters=args['co2_parameters'], humidity_parameters=args['humidity_parameters'],
 			temperature_parameters=args['temperature_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'], IP=ips, room=rooms)
 		db.session.add(climate)
@@ -788,6 +959,10 @@ api.add_resource(RelayControl, '/relay_control/')
 api.add_resource(RelaySchedule, '/room/<int:room_id>/relayschedule/<int:schedule_id>')
 api.add_resource(RoomRelayScheduleList, '/room/<int:room_id>/relayschedule')
 api.add_resource(RelayScheduleList, '/relayschedule')
+
+api.add_resource(RelayInterval, '/room/<int:room_id>/relayinterval/<int:interval_id>')
+api.add_resource(RoomRelayIntervalList, '/room/<int:room_id>/relayinterval')
+api.add_resource(RelayIntervalList, '/relayinterval')
 
 api.add_resource(ClimateParameters,'/room/<int:room_id>/climate/<int:climate_parameter_id>')
 api.add_resource(ClimateParametersIPList, '/room/<int:room_id>/climate_ips')

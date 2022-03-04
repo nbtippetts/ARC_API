@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:5000/room/1"
+url = "http://10.42.0.1:5000/room/1"
 # url = "http://192.168.0.215:5000/room/1"
 payload={
 	'name': 'room1',
