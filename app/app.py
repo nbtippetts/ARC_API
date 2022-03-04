@@ -628,7 +628,7 @@ class Climate(Resource):
 			abort(409, message="IP {} does not exist".format(1))
 		try:
 			ws = create_connection(
-				f"ws://192.168.1.18:8000/ws/socket-server/")
+				f"ws://10.42.0.1:8000/ws/socket-server/")
 			# ws = create_connection(
 			# 	f"ws://127.0.0.1:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
