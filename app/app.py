@@ -19,24 +19,24 @@ from time import gmtime, strftime
 app = Flask(__name__)
 api = Api(app)
 # app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
-	urllib.parse.quote_plus("@Wicked2009"))
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-# 	os.getenv('DB_USER', 'flask'),
-# 	os.getenv('DB_PASSWORD', ''),
-# 	os.getenv('DB_HOST', 'mariadb'),
-# 	os.getenv('DB_NAME', 'flask')
-# )
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
+# 	urllib.parse.quote_plus("@Wicked2009"))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+	os.getenv('DB_USER', 'flask'),
+	os.getenv('DB_PASSWORD', ''),
+	os.getenv('DB_HOST', 'mariadb'),
+	os.getenv('DB_NAME', 'flask')
+)
 db = SQLAlchemy(app)
 
 jobstores = {
-	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-	# 	os.getenv('DB_USER', 'flask'),
-	# 	os.getenv('DB_PASSWORD', ''),
-	# 	os.getenv('DB_HOST', 'mariadb'),
-	# 	os.getenv('DB_NAME', 'flask')
-	# ))
+	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+		os.getenv('DB_USER', 'flask'),
+		os.getenv('DB_PASSWORD', ''),
+		os.getenv('DB_HOST', 'mariadb'),
+		os.getenv('DB_NAME', 'flask')
+	))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
