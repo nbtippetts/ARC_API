@@ -51,7 +51,7 @@ job_defaults = {
 # for timeZone in all_timezones:
 #     print(timeZone)
 
-appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores,executors=executors, job_defaults=job_defaults, timezone="US/Mountain")
+appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores,executors=executors, job_defaults=job_defaults, timezone=utc)
 appscheduler.start()
 # appscheduler.shutdown()
 
@@ -61,9 +61,7 @@ class RoomModel(db.Model):
 	name = db.Column(db.String(100), nullable=False)
 	climate_schedule = db.relationship('ClimateScheduleModel', backref='room',lazy='joined')
 	climate_interval = db.relationship('ClimateIntervalModel', backref='room',lazy='joined')
-	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='room',lazy='joined')
 	climate = db.relationship('ClimateModel', backref='room',lazy='joined')
-	climate_log = db.relationship('ClimateLogModel', backref='room',lazy='joined')
 	notebook = db.relationship('NoteBookModel', backref='room', lazy='joined')
 	ip = db.relationship('IPModel', backref='room', lazy='joined')
 	timestamp = db.Column(
@@ -78,7 +76,9 @@ class IPModel(db.Model):
 	ip = db.Column(db.String(20), nullable=False)
 	climate_schedule = db.relationship('ClimateScheduleModel', backref='IP', lazy='joined')
 	climate_interval = db.relationship('ClimateIntervalModel', backref='IP', lazy='joined')
+	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='IP', lazy='select')
 	climate = db.relationship('ClimateModel', backref='IP', lazy='joined')
+	climate_log = db.relationship('ClimateLogModel', backref='IP', lazy='select')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
 		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -108,16 +108,6 @@ class ClimateIntervalModel(db.Model):
 	timestamp = db.Column(
 		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
 	)
-class ClimateScheduleLogModel(db.Model):
-	__tablename__ = 'climate_schedule_log'
-	climate_schedule_log_id = db.Column(db.Integer, primary_key=True)
-	name = db.Column(db.String(100), nullable=False)
-	start_time = db.Column(db.DateTime, nullable=False)
-	end_time = db.Column(db.DateTime, nullable=False)
-	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
-	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-	)
 
 class ClimateModel(db.Model):
 	__tablename__ = 'climate'
@@ -135,13 +125,24 @@ class ClimateModel(db.Model):
 		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
 	)
 
+class ClimateScheduleLogModel(db.Model):
+	__tablename__ = 'climate_schedule_log'
+	climate_schedule_log_id = db.Column(db.Integer, primary_key=True)
+	name = db.Column(db.String(100), nullable=False)
+	start_time = db.Column(db.DateTime, nullable=False)
+	end_time = db.Column(db.DateTime, nullable=False)
+	end_time_flag = db.Column(db.Boolean, default=False, nullable=False)
+	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
+	timestamp = db.Column(
+		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+	)
 class ClimateLogModel(db.Model):
 	__tablename__ = 'climate_log'
 	climate_log_id = db.Column(db.Integer, primary_key=True)
 	co2 = db.Column(db.Integer, nullable=False)
 	humidity = db.Column(db.Integer, nullable=False)
 	temperature = db.Column(db.Integer, nullable=False)
-	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
+	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
 		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
 	)
@@ -169,6 +170,9 @@ def start_task(*args):
 	res = requests.get(url)
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	if res.status_code == 200:
+		logs = ClimateScheduleLogModel(name=ip_state.name, start_time=datetime.now(), end_time=datetime.now(), end_time_flag=True, IP=ip_state)
+		db.session.add(logs)
+		db.session.commit()
 		ip_state.state=True
 	else:
 		ip_state.state=False
@@ -178,13 +182,22 @@ def start_task(*args):
 	# print(url)
 	return args
 def end_task(*args):
+	print(args)
 	url = f'http://{args[1]}/?v={args[0]}'
 	res = requests.get(url)
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
+	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
+	if logs.end_time_flag:
+		logs.end_time_flag = False
+		logs.end_time = datetime.now()
+		db.session.add(logs)
+		db.session.commit()
 	if res.status_code == 200:
 		ip_state.state = False
-		db.session.add(ip_state)
-		db.session.commit()
+	else:
+		ip_state.state = True
+	db.session.add(ip_state)
+	db.session.commit()
 	return args
 
 
@@ -228,9 +241,7 @@ resource_fields = {
 	'name': fields.String,
 	'climate_schedule': fields.Nested(climate_schedule_marshaller),
 	'climate_interval': fields.Nested(climate_interval_marshaller),
-	'climate_schedule_log': fields.Nested(climate_schedule_marshaller),
 	'climate': fields.Nested(climate_marshaller),
-	'climate_log': fields.Nested(climate_schedule_marshaller),
 	'notebook': fields.Nested(climate_schedule_marshaller),
 	'ip': fields.Nested(ip_marshaller),
 }
@@ -251,7 +262,6 @@ class Room(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id):
 		results = RoomModel.query.filter_by(id=room_id).first()
-		print(results.climate_schedule)
 		return results, 200
 
 	@marshal_with(resource_fields)
@@ -285,13 +295,34 @@ class Room(Resource):
 		return '', 204
 
 
+climate_schedule_log_marshaller = {
+	'climate_schedule_log_id': fields.Integer,
+	'name': fields.String,
+	'start_time': fields.DateTime,
+	'end_time': fields.DateTime,
+	'ip_id': fields.Integer,
+}
+climate_log_marshaller = {
+	'climate_log_id': fields.Integer,
+	'co2': fields.Integer,
+	'humidity': fields.Integer,
+	'temperature': fields.Integer,
+	'ip_id': fields.Integer,
+}
+
+logs_resource_fields = {
+	'id': fields.Integer,
+	'room_id': fields.Integer,
+	'name': fields.String,
+	'ip': fields.String,
+	'climate_schedule_log':  fields.Nested(climate_schedule_log_marshaller),
+	'climate_log':  fields.Nested(climate_log_marshaller),
+}
 resource_fields = {
 	'id': fields.Integer,
 	'room_id': fields.Integer,
 	'name': fields.String,
 	'ip': fields.String,
-	'climate_schedule': fields.String,
-	'climate': fields.String,
 }
 # Define parser and request args
 ip_parser = reqparse.RequestParser()
@@ -307,14 +338,14 @@ class IPList(Resource):
 			abort(409, message="Room {} does not exist".format(results))
 		return results, 200
 
-class IPRoomList(Resource):
-	@marshal_with(resource_fields)
+class IPLogs(Resource):
+	@marshal_with(logs_resource_fields)
 	def get(self, room_id):
 		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		results = IPModel.query.filter_by(room=rooms).all()
-		return results, 200
+		logs = IPModel.query.filter_by(room=rooms).all()
+		return logs, 200
 
 
 class RoomIP(Resource):
@@ -438,8 +469,8 @@ class RelaySchedule(Resource):
 		if not ip_id:
 			abort(409, message="IP {} does not exist".format(ip_id))
 		# ip_id.name = args['name']
-		db.session.add(ip_id)
-		db.session.commit()
+		# db.session.add(ip_id)
+		# db.session.commit()
 		results = ClimateScheduleModel.query.filter_by(climate_schedule_id=schedule_id, IP=ip_id,room=rooms).first()
 		if results:
 			abort(409, message="Schedule {} already exist".format(schedule_id))
@@ -585,8 +616,8 @@ class RelayInterval(Resource):
 		ip_id = IPModel.query.filter_by(id=args['ip_id']).first()
 		if not ip_id:
 			abort(409, message="IP {} does not exist".format(ip_id))
-		db.session.add(ip_id)
-		db.session.commit()
+		# db.session.add(ip_id)
+		# db.session.commit()
 		results = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id, IP=ip_id,room=rooms).first()
 		if results:
 			abort(409, message="Interval {} already exist".format(interval_id))
@@ -656,11 +687,11 @@ class RelayInterval(Resource):
 		db.session.delete(interval)
 		db.session.commit()
 
-		start_job = appscheduler.get_job(f'{interval_id}-start')
+		start_job = appscheduler.get_job(f'{interval_id}-interval-start')
 		if not start_job:
 			abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id))
 
-		end_job = appscheduler.get_job(f'{interval_id}-end')
+		end_job = appscheduler.get_job(f'{interval_id}-interval-end')
 		if not end_job:
 			abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id))
 
@@ -797,18 +828,18 @@ class Climate(Resource):
 		ips = IPModel.query.filter_by(ip=request.remote_addr).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
-		try:
-			ws = create_connection(
-				f"ws://10.42.0.1:8000/ws/socket-server/")
-			# ws = create_connection(
-			# 	f"ws://127.0.0.1:8000/ws/socket-server/")
-			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
-			result = ws.recv()
-			print("Received '%s'" % result)
-			ws.close()
-		except Exception as e:
-			print(e)
-			pass
+		# try:
+		# 	# ws = create_connection(
+		# 	# 	f"ws://10.42.0.1:8000/ws/socket-server/")
+		# 	ws = create_connection(
+		# 		f"ws://127.0.0.1:8000/ws/socket-server/")
+		# 	ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
+		# 	result = ws.recv()
+		# 	print("Received '%s'" % result)
+		# 	ws.close()
+		# except Exception as e:
+		# 	print(e)
+		# 	pass
 		# climate_log = ClimateLogModel(co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], room=rooms)
 		# db.session.add(climate_log)
 		# db.session.commit()
@@ -921,6 +952,21 @@ class Climate(Resource):
 		return 'SUCCESS', 200
 
 
+class ClimateLog(Resource):
+	def get(self):
+		args = climate_parser.parse_args()
+		print(args)
+		# ips = IPModel.query.filter_by(ip='192.168.1.12').first()
+		ips = IPModel.query.filter_by(ip=request.remote_addr).first()
+		if not ips:
+			abort(409, message="IP {} does not exist".format(1))
+		climate_log = ClimateLogModel(
+			co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], IP=ips)
+		db.session.add(climate_log)
+		db.session.commit()
+		return 'SUCCESS', 200
+
+
 relay_parser = reqparse.RequestParser()
 relay_parser.add_argument('ip', type=str, help='Invalid IP')
 relay_parser.add_argument('state', type=str, help='Invalid State')
@@ -934,8 +980,17 @@ class RelayControl(Resource):
 		relay_res = requests.get(relay_url)
 		if relay_res.status_code == 200:
 			if args["state"] == 'low':
+				logs = ClimateScheduleLogModel(name=ips.name, start_time=datetime.now(), end_time=datetime.now(), end_time_flag=True, IP=ips)
+				db.session.add(logs)
+				db.session.commit()
 				ips.state = True
 			elif args["state"] == 'high':
+				logs = ClimateScheduleLogModel.query.filter_by(IP=ips).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
+				if logs.end_time_flag:
+					logs.end_time_flag = False
+					logs.end_time = datetime.now()
+					db.session.add(logs)
+					db.session.commit()
 				ips.state = False
 		else:
 			ips.state = False
@@ -945,13 +1000,18 @@ class RelayControl(Resource):
 		return 'SUCCESS', 200
 
 
+# class ScheduleLogs(Resource):
+# 	def get(self,ip_id):
+
+
+
 
 api.add_resource(Room, '/room/<int:room_id>')
 api.add_resource(RoomList, '/rooms')
 
 api.add_resource(AddIP, '/ip')
 api.add_resource(RoomIP, '/room/<int:room_id>/ip/<int:ip_id>')
-api.add_resource(IPRoomList, '/room/<int:room_id>/ips')
+api.add_resource(IPLogs, '/room/<int:room_id>/ips')
 api.add_resource(IPList, '/all_ips')
 
 api.add_resource(RelayControl, '/relay_control/')
@@ -969,6 +1029,7 @@ api.add_resource(ClimateParametersIPList, '/room/<int:room_id>/climate_ips')
 api.add_resource(ClimateParametersList,'/room/<int:room_id>/climate')
 
 api.add_resource(Climate, '/climate')
+api.add_resource(ClimateLog, '/climate/log')
 
 if __name__ == '__main__':
 	app.run(host='0.0.0.0')
