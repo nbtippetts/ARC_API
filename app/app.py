@@ -1,8 +1,9 @@
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timezone
-from pytz import utc, all_timezones
+from datetime import datetime
+from backports import zoneinfo
+from pytz import utc
 import requests
 import json
 import urllib.parse
@@ -12,15 +13,12 @@ from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
 from sqlalchemy import null
 from websocket import create_connection
-import os
-from time import gmtime, strftime
 
 
 app = Flask(__name__)
 api = Api(app)
 # app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///ARC.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(
-	urllib.parse.quote_plus("@Wicked2009"))
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
 # 	os.getenv('DB_USER', 'flask'),
 # 	os.getenv('DB_PASSWORD', ''),
@@ -47,9 +45,8 @@ job_defaults = {
 	'max_instances': 3
 }
 
-# print('Timezones')
-# for timeZone in all_timezones:
-#     print(timeZone)
+MT = zoneinfo.ZoneInfo("US/Mountain")
+datetime(2020, 1, 1, tzinfo=MT)
 
 appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores,executors=executors, job_defaults=job_defaults, timezone=utc)
 appscheduler.start()
@@ -170,10 +167,11 @@ def start_task(*args):
 	res = requests.get(url)
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	if res.status_code == 200:
-		logs = ClimateScheduleLogModel(name=ip_state.name, start_time=datetime.now(), end_time=datetime.now(), end_time_flag=True, IP=ip_state)
-		db.session.add(logs)
-		db.session.commit()
-		ip_state.state=True
+		if ip_state.state == False:
+			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=datetime.now(tz=MT), end_time=datetime.now(tz=MT), end_time_flag=True, IP=ip_state)
+			db.session.add(logs)
+			db.session.commit()
+			ip_state.state=True
 	else:
 		ip_state.state=False
 
@@ -189,7 +187,7 @@ def end_task(*args):
 	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 	if logs.end_time_flag:
 		logs.end_time_flag = False
-		logs.end_time = datetime.now()
+		logs.end_time = datetime.now(tz=MT)
 		db.session.add(logs)
 		db.session.commit()
 	if res.status_code == 200:
@@ -468,9 +466,23 @@ class RelaySchedule(Resource):
 		ip_id = IPModel.query.filter_by(id=args['ip_id']).first()
 		if not ip_id:
 			abort(409, message="IP {} does not exist".format(ip_id))
-		# ip_id.name = args['name']
-		# db.session.add(ip_id)
-		# db.session.commit()
+
+		remove_ip = ClimateModel.query.filter(
+			(ClimateModel.co2_relay_ip == ip_id.ip) |
+			(ClimateModel.humidity_relay_ip == ip_id.ip) |
+			(ClimateModel.exhaust_relay_ip == ip_id.ip)
+		).first()
+		if remove_ip:
+			if remove_ip.co2_relay_ip == ip_id.ip:
+				remove_ip.co2_relay_ip = ''
+			if remove_ip.humidity_relay_ip == ip_id.ip:
+				remove_ip.humidity_relay_ip = ''
+			if remove_ip.exhaust_relay_ip == ip_id.ip:
+				remove_ip.exhaust_relay_ip = ''
+
+			db.session.add(remove_ip)
+			db.session.commit()
+
 		results = ClimateScheduleModel.query.filter_by(climate_schedule_id=schedule_id, IP=ip_id,room=rooms).first()
 		if results:
 			abort(409, message="Schedule {} already exist".format(schedule_id))
@@ -533,6 +545,21 @@ class RelaySchedule(Resource):
 		schedule = ClimateScheduleModel.query.filter_by(climate_schedule_id=schedule_id, room=rooms).first()
 		if not schedule:
 			abort(409, message="Schedule {} doesn't exist, cannot Delete.".format(schedule_id))
+		if schedule.name == "CO2":
+			add_ip = ClimateModel.query.filter_by(co2_relay_ip='').first()
+			add_ip.co2_relay_ip = schedule.IP.ip
+			db.session.add(add_ip)
+			db.session.commit()
+		if schedule.name == "Humidity":
+			add_ip = ClimateModel.query.filter_by(humidity_relay_ip='').first()
+			add_ip.humidity_relay_ip = schedule.IP.ip
+			db.session.add(add_ip)
+			db.session.commit()
+		if schedule.name == "Exhaust":
+			add_ip = ClimateModel.query.filter_by(exhaust_relay_ip='').first()
+			add_ip.exhaust_relay_ip = schedule.IP.ip
+			db.session.add(add_ip)
+			db.session.commit()
 		db.session.delete(schedule)
 		db.session.commit()
 
@@ -618,9 +645,26 @@ class RelayInterval(Resource):
 			abort(409, message="IP {} does not exist".format(ip_id))
 		# db.session.add(ip_id)
 		# db.session.commit()
+		remove_ip = ClimateModel.query.filter(
+			(ClimateModel.co2_relay_ip==ip_id.ip) |
+			(ClimateModel.humidity_relay_ip==ip_id.ip) |
+			(ClimateModel.exhaust_relay_ip==ip_id.ip)
+		).first()
+		if remove_ip:
+			if remove_ip.co2_relay_ip == ip_id.ip:
+				remove_ip.co2_relay_ip = ''
+			if remove_ip.humidity_relay_ip == ip_id.ip:
+				remove_ip.humidity_relay_ip = ''
+			if remove_ip.exhaust_relay_ip == ip_id.ip:
+				remove_ip.exhaust_relay_ip=''
+
+			db.session.add(remove_ip)
+			db.session.commit()
+
 		results = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id, IP=ip_id,room=rooms).first()
 		if results:
 			abort(409, message="Interval {} already exist".format(interval_id))
+
 		interval = ClimateIntervalModel(climate_interval_id=interval_id, name=args['name'], interval_hour=args['interval_hour'],interval_minute=args['interval_minute'],duration_hour=args['duration_hour'],duration_minute=args['duration_minute'], IP=ip_id, room=rooms)
 		db.session.add(interval)
 		db.session.commit()
@@ -684,6 +728,21 @@ class RelayInterval(Resource):
 		interval = ClimateIntervalModel.query.filter_by(climate_interval_id=interval_id, room=rooms).first()
 		if not interval:
 			abort(409, message="Interval {} doesn't exist, cannot Delete.".format(interval_id))
+		if interval.name == "CO2":
+			add_ip = ClimateModel.query.filter_by(co2_relay_ip='').first()
+			add_ip.co2_relay_ip = interval.IP.ip
+			db.session.add(add_ip)
+			db.session.commit()
+		if interval.name == "Humidity":
+			add_ip = ClimateModel.query.filter_by(humidity_relay_ip='').first()
+			add_ip.humidity_relay_ip = interval.IP.ip
+			db.session.add(add_ip)
+			db.session.commit()
+		if interval.name == "Exhaust":
+			add_ip = ClimateModel.query.filter_by(exhaust_relay_ip='').first()
+			add_ip.exhaust_relay_ip = interval.IP.ip
+			db.session.add(add_ip)
+			db.session.commit()
 		db.session.delete(interval)
 		db.session.commit()
 
@@ -774,6 +833,39 @@ class ClimateParameters(Resource):
 		if results:
 			abort(409, message="Climate {} already exist".format(climate_parameter_id))
 
+		check_interval = ClimateIntervalModel.query.filter(
+			ClimateIntervalModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
+		if check_interval:
+			for interval_id in check_interval:
+				start_job = appscheduler.get_job(f'{interval_id.climate_interval_id}-interval-start')
+				if not start_job:
+					abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id.climate_interval_id))
+
+				end_job = appscheduler.get_job(f'{interval_id.climate_interval_id}-interval-end')
+				if not end_job:
+					abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id.climate_interval_id))
+
+				appscheduler.remove_job(f'{interval_id.climate_interval_id}-interval-start')
+				appscheduler.remove_job(f'{interval_id.climate_interval_id}-interval-end')
+				db.session.delete(interval_id)
+				db.session.commit()
+		check_schedule = ClimateScheduleModel.query.filter(
+			ClimateScheduleModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
+		if check_schedule:
+			for schedule_id in check_schedule:
+				start_job = appscheduler.get_job(f'{schedule_id.climate_schedule_id}-interval-start')
+				if not start_job:
+					abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(schedule_id.climate_schedule_id))
+
+				end_job = appscheduler.get_job(f'{schedule_id.climate_schedule_id}-interval-end')
+				if not end_job:
+					abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(schedule_id.climate_schedule_id))
+
+				appscheduler.remove_job(f'{schedule_id.climate_schedule_id}-interval-start')
+				appscheduler.remove_job(f'{schedule_id.climate_schedule_id}-interval-end')
+				db.session.delete(schedule_id)
+				db.session.commit()
+
 		climate = ClimateModel(climate_id=climate_parameter_id, name=args['name'], co2_parameters=args['co2_parameters'], humidity_parameters=args['humidity_parameters'],
 			temperature_parameters=args['temperature_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'], IP=ips, room=rooms)
 		db.session.add(climate)
@@ -849,24 +941,26 @@ class Climate(Resource):
 
 		try:
 			if args['co2'] <= climate.co2_parameters:
-				co2_url = f'http://{climate.co2_relay_ip}/?v=low'
-				print(co2_url)
-				co2_res = requests.get(co2_url)
-				if co2_res.status_code == 200:
-					ips.state = True
-				else:
-					ips.state = False
+				start_task('low',climate.co2_relay_ip)
+				# co2_url = f'http://{climate.co2_relay_ip}/?v=low'
+				# print(co2_url)
+				# co2_res = requests.get(co2_url)
+				# if co2_res.status_code == 200:
+				# 	ips.state = True
+				# else:
+				# 	ips.state = False
 
-				db.session.add(ips)
-				db.session.commit()
+				# db.session.add(ips)
+				# db.session.commit()
 			elif args['co2'] >= climate.co2_parameters:
-				co2_url = f'http://{climate.co2_relay_ip}/?v=high'
-				print(co2_url)
-				co2_res = requests.get(co2_url)
-				if co2_res.status_code == 200:
-					ips.state = False
-					db.session.add(ips)
-					db.session.commit()
+				end_task('high', climate.co2_relay_ip)
+				# co2_url = f'http://{climate.co2_relay_ip}/?v=high'
+				# print(co2_url)
+				# co2_res = requests.get(co2_url)
+				# if co2_res.status_code == 200:
+				# 	ips.state = False
+				# 	db.session.add(ips)
+				# 	db.session.commit()
 			else:
 				print('co2 do nothing')
 		except Exception as e:
@@ -875,42 +969,45 @@ class Climate(Resource):
 
 		try:
 			if args['temperature'] >= climate.temperature_parameters:
-				exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=low'
-				print(exhaust_url)
-				exhaust_res = requests.get(exhaust_url)
-				print(exhaust_res.status_code)
-				exhaust_res = requests.get(co2_url)
-				if exhaust_res.status_code == 200:
-					ips.state = True
-				else:
-					ips.state = False
+				start_task('low', climate.exhaust_relay_ip)
+				# exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=low'
+				# print(exhaust_url)
+				# exhaust_res = requests.get(exhaust_url)
+				# print(exhaust_res.status_code)
+				# exhaust_res = requests.get(co2_url)
+				# if exhaust_res.status_code == 200:
+				# 	ips.state = True
+				# else:
+				# 	ips.state = False
 
-				db.session.add(ips)
-				db.session.commit()
+				# db.session.add(ips)
+				# db.session.commit()
 				# start_task('low', climate.exhaust_relay_ip)
 			elif args['temperature'] <= climate.temperature_parameters and args['humidity'] >= climate.humidity_parameters:
-				exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=low'
-				print(exhaust_url)
-				exhaust_res = requests.get(exhaust_url)
-				print(exhaust_res.status_code)
-				exhaust_res = requests.get(co2_url)
-				if exhaust_res.status_code == 200:
-					ips.state = True
-				else:
-					ips.state = False
+				start_task('low', climate.exhaust_relay_ip)
+				# exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=low'
+				# print(exhaust_url)
+				# exhaust_res = requests.get(exhaust_url)
+				# print(exhaust_res.status_code)
+				# exhaust_res = requests.get(co2_url)
+				# if exhaust_res.status_code == 200:
+				# 	ips.state = True
+				# else:
+				# 	ips.state = False
 
-				db.session.add(ips)
-				db.session.commit()
+				# db.session.add(ips)
+				# db.session.commit()
 			elif args['temperature'] <= climate.temperature_parameters:
-				exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=high'
-				print(exhaust_url)
-				exhaust_res = requests.get(exhaust_url)
-				print(exhaust_res.status_code)
-				exhaust_res = requests.get(co2_url)
-				if exhaust_res.status_code == 200:
-					ips.state = False
-					db.session.add(ips)
-					db.session.commit()
+				end_task('high', climate.exhaust_relay_ip)
+				# exhaust_url = f'http://{climate.exhaust_relay_ip}/?v=high'
+				# print(exhaust_url)
+				# exhaust_res = requests.get(exhaust_url)
+				# print(exhaust_res.status_code)
+				# exhaust_res = requests.get(co2_url)
+				# if exhaust_res.status_code == 200:
+				# 	ips.state = False
+				# 	db.session.add(ips)
+				# 	db.session.commit()
 				# end_task('high', climate.exhaust_relay_ip)
 			else:
 				print('temp do nothing')
@@ -919,27 +1016,29 @@ class Climate(Resource):
 			pass
 		try:
 			if args['humidity'] <= climate.humidity_parameters:
-				humidity_url = f'http://{climate.humidity_relay_ip}/?v=low'
-				print(humidity_url)
-				humidity_res = requests.get(humidity_url)
-				print(humidity_res.status_code)
-				if humidity_res.status_code == 200:
-					ips.state = True
-				else:
-					ips.state = False
+				start_task('low', climate.humidity_relay_ip)
+				# humidity_url = f'http://{climate.humidity_relay_ip}/?v=low'
+				# print(humidity_url)
+				# humidity_res = requests.get(humidity_url)
+				# print(humidity_res.status_code)
+				# if humidity_res.status_code == 200:
+				# 	ips.state = True
+				# else:
+				# 	ips.state = False
 
-				db.session.add(ips)
-				db.session.commit()
+				# db.session.add(ips)
+				# db.session.commit()
 				# start_task('low', climate.humidity_relay_ip)
 			elif args['humidity'] >= climate.humidity_parameters:
-				humidity_url = f'http://{climate.humidity_relay_ip}/?v=high'
-				print(humidity_url)
-				humidity_res = requests.get(humidity_url)
-				print(humidity_res.status_code)
-				if humidity_res.status_code == 200:
-					ips.state = False
-					db.session.add(ips)
-					db.session.commit()
+				end_task('high', climate.humidity_relay_ip)
+				# humidity_url = f'http://{climate.humidity_relay_ip}/?v=high'
+				# print(humidity_url)
+				# humidity_res = requests.get(humidity_url)
+				# print(humidity_res.status_code)
+				# if humidity_res.status_code == 200:
+				# 	ips.state = False
+				# 	db.session.add(ips)
+				# 	db.session.commit()
 
 				# end_task('high', climate.humidity_relay_ip)
 			else:
@@ -980,7 +1079,7 @@ class RelayControl(Resource):
 		relay_res = requests.get(relay_url)
 		if relay_res.status_code == 200:
 			if args["state"] == 'low':
-				logs = ClimateScheduleLogModel(name=ips.name, start_time=datetime.now(), end_time=datetime.now(), end_time_flag=True, IP=ips)
+				logs = ClimateScheduleLogModel(name=ips.name, start_time=datetime.now(tz=MT), end_time=datetime.now(tz=MT), end_time_flag=True, IP=ips)
 				db.session.add(logs)
 				db.session.commit()
 				ips.state = True
@@ -988,7 +1087,7 @@ class RelayControl(Resource):
 				logs = ClimateScheduleLogModel.query.filter_by(IP=ips).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 				if logs.end_time_flag:
 					logs.end_time_flag = False
-					logs.end_time = datetime.now()
+					logs.end_time = datetime.now(tz=MT)
 					db.session.add(logs)
 					db.session.commit()
 				ips.state = False
