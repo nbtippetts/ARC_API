@@ -21,6 +21,8 @@ services:
       DB_PASSWORD: slimdingo85
     volumes:
       - ./app:/app
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     links:
       # network connection with these services
       - mariadb
@@ -38,6 +40,8 @@ services:
     volumes:
         # pass volume named mysql-data to mysql container
       - mysql-data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     labels:
       project: "flask"

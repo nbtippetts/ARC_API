@@ -16,8 +16,6 @@ mysql-connector-python
 pycparser
 PyMySQL
 python-dateutil
-pytz
-pytz-deprecation-shim
 requests
 SQLAlchemy
 toml
@@ -25,3 +23,4 @@ tzdata
 tzlocal
 urllib3
 websocket-client
+tzlocal
