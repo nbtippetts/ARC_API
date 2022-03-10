@@ -473,8 +473,6 @@ class RelaySchedule(Resource):
 		args = parser.parse_args()
 		args['start_time']=datetime.strptime(args['start_time'], '%Y-%m-%d %H:%M')
 		args['end_time']=datetime.strptime(args['end_time'], '%Y-%m-%d %H:%M')
-		# args['start_time'] = args['start_time'].astimezone(pytz.utc)
-		# args['end_time'] = args['end_time'].astimezone(pytz.utc)
 		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
