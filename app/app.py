@@ -1,8 +1,9 @@
+from email.policy import default
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
 from tzlocal import get_localzone_name, get_localzone
+from datetime import datetime
 import requests
 import json
 import urllib.parse
@@ -16,23 +17,23 @@ import os
 
 app = Flask(__name__)
 api = Api(app)
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-	os.getenv('DB_USER', 'flask'),
-	os.getenv('DB_PASSWORD', ''),
-	os.getenv('DB_HOST', 'mariadb'),
-	os.getenv('DB_NAME', 'flask')
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+# 	os.getenv('DB_USER', 'flask'),
+# 	os.getenv('DB_PASSWORD', ''),
+# 	os.getenv('DB_HOST', 'mariadb'),
+# 	os.getenv('DB_NAME', 'flask')
+# )
 db = SQLAlchemy(app)
 
 jobstores = {
-	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-		os.getenv('DB_USER', 'flask'),
-		os.getenv('DB_PASSWORD', ''),
-		os.getenv('DB_HOST', 'mariadb'),
-		os.getenv('DB_NAME', 'flask')
-	))
+	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+	# 	os.getenv('DB_USER', 'flask'),
+	# 	os.getenv('DB_PASSWORD', ''),
+	# 	os.getenv('DB_HOST', 'mariadb'),
+	# 	os.getenv('DB_NAME', 'flask')
+	# ))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -45,6 +46,10 @@ job_defaults = {
 
 tz = get_localzone()
 print(tz)
+LOCAL_DT = datetime.now()
+print(LOCAL_DT)
+LOCAL_DT = LOCAL_DT.replace(tzinfo=tz)
+print(LOCAL_DT)
 appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores, executors=executors, job_defaults=job_defaults, timezone=tz)
 appscheduler.start()
 # appscheduler.shutdown()
@@ -110,6 +115,7 @@ class ClimateModel(db.Model):
 	co2_parameters = db.Column(db.Integer, nullable=False)
 	humidity_parameters = db.Column(db.Integer, nullable=False)
 	temperature_parameters = db.Column(db.Integer, nullable=False)
+	buffer_parameters = db.Column(db.Integer, default=0, nullable=False)
 	co2_relay_ip = db.Column(db.String(20), nullable=False)
 	humidity_relay_ip = db.Column(db.String(20), nullable=False)
 	exhaust_relay_ip = db.Column(db.String(20), nullable=False)
@@ -165,7 +171,7 @@ def start_task(*args):
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	if res.status_code == 200:
 		if ip_state.state == False:
-			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=datetime.now(), end_time=datetime.now(), end_time_flag=True, IP=ip_state)
+			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=LOCAL_DT, end_time=LOCAL_DT, end_time_flag=True, IP=ip_state)
 			db.session.add(logs)
 			db.session.commit()
 			ip_state.state=True
@@ -184,7 +190,7 @@ def end_task(*args):
 	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 	if logs.end_time_flag:
 		logs.end_time_flag = False
-		logs.end_time = datetime.now()
+		logs.end_time = LOCAL_DT
 		db.session.add(logs)
 		db.session.commit()
 	if res.status_code == 200:
@@ -230,6 +236,7 @@ climate_interval_marshaller = {
 climate_marshaller = {
 	'climate_id': fields.Integer,
 	'name': fields.String,
+	'buffer_parameters': fields.Integer,
 	'co2_parameters': fields.Integer,
 	'humidity_parameters': fields.Integer,
 	'temperature_parameters': fields.Integer,
@@ -444,7 +451,7 @@ class RelayScheduleList(Resource):
 class RoomRelayScheduleList(Resource):
 	@marshal_with(resource_fields)
 	def get(self,room_id):
-		print(datetime.now())
+		print(LOCAL_DT)
 		jobs = appscheduler.get_jobs()
 		print(jobs)
 		for job in jobs:
@@ -849,6 +856,7 @@ resource_fields = {
 	'climate_id': fields.Integer,
 	'room_id': fields.Integer,
 	'name':fields.String,
+	'buffer_parameters':fields.Integer,
 	'co2_parameters':fields.Integer,
 	'humidity_parameters':fields.Integer,
 	'temperature_parameters':fields.Integer,
@@ -864,6 +872,7 @@ climate_ips_resource_fields = {
 
 climate_parameters_parser = reqparse.RequestParser()
 climate_parameters_parser.add_argument('name', type=str, help='Invalid Room', required=True)
+climate_parameters_parser.add_argument('buffer_parameters', type=int, help='Invalid Buffer INT', required=True)
 climate_parameters_parser.add_argument('co2_parameters', type=int, help='Invalid CO2 Data', required=True)
 climate_parameters_parser.add_argument('humidity_parameters', type=int, help='Invalid Humidity Data', required=True)
 climate_parameters_parser.add_argument('temperature_parameters', type=int, help='Invalid Temperature Data', required=True)
@@ -956,7 +965,7 @@ class ClimateParameters(Resource):
 					check_ip_state(ips)
 
 		climate = ClimateModel(climate_id=climate_parameter_id, name=args['name'], co2_parameters=args['co2_parameters'], humidity_parameters=args['humidity_parameters'],
-			temperature_parameters=args['temperature_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'], IP=ips, room=rooms)
+			temperature_parameters=args['temperature_parameters'], buffer_parameters=args['buffer_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'], IP=ips, room=rooms)
 		db.session.add(climate)
 		db.session.commit()
 		return results, 201
@@ -1022,6 +1031,7 @@ class ClimateParameters(Resource):
 		climate.co2_parameters = args['co2_parameters']
 		climate.humidity_parameters = args['humidity_parameters']
 		climate.temperature_parameters = args['temperature_parameters']
+		climate.buffer_parameters = args['buffer_parameters']
 		climate.co2_relay_ip = args['co2_relay_ip']
 		climate.humidity_relay_ip = args['humidity_relay_ip']
 		climate.exhaust_relay_ip = args['exhaust_relay_ip']
@@ -1052,15 +1062,15 @@ class Climate(Resource):
 		args = climate_parser.parse_args()
 		print(args)
 
-		# ips = IPModel.query.filter_by(ip='192.168.1.12').first()
-		print(request.remote_addr)
-		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		ips = IPModel.query.filter_by(ip='192.168.0.133').first()
+		# print(request.remote_addr)
+		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
 		try:
 			# ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
-			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
-			ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
+			ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
+			# ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 			result = ws.recv()
 			print("Received '%s'" % result)
@@ -1073,6 +1083,9 @@ class Climate(Resource):
 		if not climate:
 			abort(409, message="Climate {} does not exist".format(1))
 
+		humidity_plus = climate.humidity_parameters+climate.buffer_parameters
+		humidity_minus = climate.humidity_parameters-climate.buffer_parameters
+		temperature_parameters = climate.temperature_parameters+climate.buffer_parameters
 		try:
 			if climate.co2_relay_ip =='False':
 				print('do nothing')
@@ -1091,11 +1104,11 @@ class Climate(Resource):
 			if climate.exhaust_relay_ip == 'False':
 				print('do nothing')
 			else:
-				if args['temperature'] >= climate.temperature_parameters:
+				if args['temperature'] >= temperature_parameters:
 					start_task('low', climate.exhaust_relay_ip)
-				elif args['temperature'] <= climate.temperature_parameters and args['humidity'] >= climate.humidity_parameters:
+				elif args['temperature'] <= temperature_parameters and args['humidity'] >= humidity_plus:
 					start_task('low', climate.exhaust_relay_ip)
-				elif args['temperature'] <= climate.temperature_parameters:
+				elif args['temperature'] <= temperature_parameters:
 					end_task('high', climate.exhaust_relay_ip)
 				else:
 					print('temp do nothing')
@@ -1106,9 +1119,9 @@ class Climate(Resource):
 			if climate.humidity_relay_ip == 'False':
 				print('do nothing')
 			else:
-				if args['humidity'] <= climate.humidity_parameters:
+				if args['humidity'] <= humidity_minus:
 					start_task('low', climate.humidity_relay_ip)
-				elif args['humidity'] >= climate.humidity_parameters:
+				elif args['humidity'] >= humidity_minus:
 					end_task('high', climate.humidity_relay_ip)
 				else:
 					print('humidity do nothing')
@@ -1148,7 +1161,7 @@ class RelayControl(Resource):
 		relay_res = requests.get(relay_url)
 		if relay_res.status_code == 200:
 			if args["state"] == 'low':
-				logs = ClimateScheduleLogModel(name=ips.name, start_time=datetime.now(), end_time=datetime.now(), end_time_flag=True, IP=ips)
+				logs = ClimateScheduleLogModel(name=ips.name, start_time=LOCAL_DT, end_time=LOCAL_DT, end_time_flag=True, IP=ips)
 				db.session.add(logs)
 				db.session.commit()
 				ips.state = True
@@ -1156,7 +1169,7 @@ class RelayControl(Resource):
 				logs = ClimateScheduleLogModel.query.filter_by(IP=ips).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 				if logs.end_time_flag:
 					logs.end_time_flag = False
-					logs.end_time = datetime.now()
+					logs.end_time = LOCAL_DT
 					db.session.add(logs)
 					db.session.commit()
 				ips.state = False
