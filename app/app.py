@@ -1053,9 +1053,10 @@ class Climate(Resource):
 		print(args)
 
 		# ips = IPModel.query.filter_by(ip='192.168.1.12').first()
-		ips = IPModel.query.filter_by(ip=request.remote_addr).first()
+		print(request.remote_addr)
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
-			abort(409, message="IP {} does not exist".format(1))
+			abort(409, message="IP {} does not exist".format(request.remote_addr))
 		try:
 			ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
 			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
