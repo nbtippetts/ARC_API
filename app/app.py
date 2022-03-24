@@ -17,23 +17,23 @@ import os
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-# 	os.getenv('DB_USER', 'flask'),
-# 	os.getenv('DB_PASSWORD', ''),
-# 	os.getenv('DB_HOST', 'mariadb'),
-# 	os.getenv('DB_NAME', 'flask')
-# )
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+	os.getenv('DB_USER', 'flask'),
+	os.getenv('DB_PASSWORD', ''),
+	os.getenv('DB_HOST', 'mariadb'),
+	os.getenv('DB_NAME', 'flask')
+)
 db = SQLAlchemy(app)
 
 jobstores = {
-	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-	# 	os.getenv('DB_USER', 'flask'),
-	# 	os.getenv('DB_PASSWORD', ''),
-	# 	os.getenv('DB_HOST', 'mariadb'),
-	# 	os.getenv('DB_NAME', 'flask')
-	# ))
+	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+		os.getenv('DB_USER', 'flask'),
+		os.getenv('DB_PASSWORD', ''),
+		os.getenv('DB_HOST', 'mariadb'),
+		os.getenv('DB_NAME', 'flask')
+	))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -64,7 +64,7 @@ class RoomModel(db.Model):
 	notebook = db.relationship('NoteBookModel', cascade='all, delete', backref='room', lazy='joined')
 	ip = db.relationship('IPModel', cascade='all, delete', backref='room', lazy='joined')
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 
 class IPModel(db.Model):
@@ -80,7 +80,7 @@ class IPModel(db.Model):
 	climate_log = db.relationship('ClimateLogModel', backref='IP',lazy='select', order_by='ClimateLogModel.timestamp.desc()')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 class ClimateScheduleModel(db.Model):
 	__tablename__ = 'climate_schedule'
@@ -92,7 +92,7 @@ class ClimateScheduleModel(db.Model):
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 class ClimateIntervalModel(db.Model):
 	__tablename__ = 'climate_interval'
@@ -105,7 +105,7 @@ class ClimateIntervalModel(db.Model):
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 
 class ClimateModel(db.Model):
@@ -122,7 +122,7 @@ class ClimateModel(db.Model):
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 
 class ClimateScheduleLogModel(db.Model):
@@ -134,7 +134,7 @@ class ClimateScheduleLogModel(db.Model):
 	end_time_flag = db.Column(db.Boolean, default=False, nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 class ClimateLogModel(db.Model):
 	__tablename__ = 'climate_log'
@@ -144,7 +144,7 @@ class ClimateLogModel(db.Model):
 	temperature = db.Column(db.Integer, nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 
 
@@ -156,7 +156,7 @@ class NoteBookModel(db.Model):
 	publish_date = db.Column(db.DateTime, nullable=False)
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
-		db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
 
 
@@ -539,8 +539,8 @@ class RelaySchedule(Resource):
 
 		start_triggers = CronTrigger(day_of_week=args['how_often'],hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(day_of_week=args['how_often'],hour=end_hour, minute=end_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip, args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
 		return schedule, 201
 
 	@marshal_with(resource_fields)
@@ -574,8 +574,8 @@ class RelaySchedule(Resource):
 			day_of_week=args['how_often'], hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(
 			day_of_week=args['how_often'], hour=end_hour, minute=end_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip, args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
 		return 'Successfuly Updated', 204
 
 	def delete(self,room_id,schedule_id):
@@ -761,8 +761,8 @@ class RelayInterval(Resource):
 
 		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
 		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
-		appscheduler.add_job(start_task,start_triggers,id=f'{interval_id}-interval-start',args=['low',interval.IP.ip],replace_existing=True)
-		appscheduler.add_job(end_task,end_triggers,id=f'{interval_id}-interval-end',args=['high', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task,start_triggers,id=f'{interval_id}-interval-start',args=['low',interval.IP.ip, args['start_time'], args['end_time']],replace_existing=True)
+		appscheduler.add_job(end_task,end_triggers,id=f'{interval_id}-interval-end',args=['high', interval.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
 		return interval, 201
 
 	@marshal_with(resource_fields)
@@ -804,8 +804,8 @@ class RelayInterval(Resource):
 			duration_minute = f"*/{str(args['duration_minute'])}"
 		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
 		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip, args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
 		return 'Successfuly Updated', 204
 
 	def delete(self,room_id,interval_id):
@@ -1062,15 +1062,15 @@ class Climate(Resource):
 		args = climate_parser.parse_args()
 		print(args)
 
-		ips = IPModel.query.filter_by(ip='192.168.0.133').first()
-		# print(request.remote_addr)
-		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		# ips = IPModel.query.filter_by(ip='192.168.0.133').first()
+		print(request.remote_addr)
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
 		try:
 			# ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
-			ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
-			# ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
+			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
+			ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 			result = ws.recv()
 			print("Received '%s'" % result)
