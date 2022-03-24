@@ -86,8 +86,8 @@ class ClimateScheduleModel(db.Model):
 	__tablename__ = 'climate_schedule'
 	climate_schedule_id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(100), nullable=False)
-	start_time = db.Column(db.DateTime, nullable=False)
-	end_time = db.Column(db.DateTime, nullable=False)
+	start_time = db.Column(db.String(100), nullable=False)
+	end_time = db.Column(db.String(100), nullable=False)
 	how_often = db.Column(db.String(20), nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
@@ -129,8 +129,8 @@ class ClimateScheduleLogModel(db.Model):
 	__tablename__ = 'climate_schedule_log'
 	climate_schedule_log_id = db.Column(db.Integer, primary_key=True)
 	name = db.Column(db.String(100), nullable=False)
-	start_time = db.Column(db.DateTime, nullable=False)
-	end_time = db.Column(db.DateTime, nullable=False)
+	start_time = db.Column(db.String(100), nullable=False)
+	end_time = db.Column(db.String(100), nullable=False)
 	end_time_flag = db.Column(db.Boolean, default=False, nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
@@ -153,7 +153,7 @@ class NoteBookModel(db.Model):
 	notebook_id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.String(100), nullable=False)
 	body = db.Column(db.String(800), nullable=False)
-	publish_date = db.Column(db.DateTime, nullable=False)
+	publish_date = db.Column(db.String(100), nullable=False)
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
@@ -164,6 +164,15 @@ class NoteBookModel(db.Model):
 def create_tables():
 	db.create_all()
 
+def get_local_time():
+	local_tz = get_localzone()
+	now_dt = datetime.now()
+	now_local_dt = now_dt.replace(tzinfo=local_tz)
+	local_time = now_local_dt.strftime("%I:%M %p")
+	print(local_time)
+	return local_time
+
+
 def start_task(*args):
 	print(args)
 	url = f'http://{args[1]}/?v={args[0]}'
@@ -171,7 +180,7 @@ def start_task(*args):
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	if res.status_code == 200:
 		if ip_state.state == False:
-			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=LOCAL_DT, end_time=LOCAL_DT, end_time_flag=True, IP=ip_state)
+			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=get_local_time(), end_time=get_local_time(), end_time_flag=True, IP=ip_state)
 			db.session.add(logs)
 			db.session.commit()
 			ip_state.state=True
@@ -190,7 +199,7 @@ def end_task(*args):
 	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 	if logs.end_time_flag:
 		logs.end_time_flag = False
-		logs.end_time = LOCAL_DT
+		logs.end_time = get_local_time()
 		db.session.add(logs)
 		db.session.commit()
 	if res.status_code == 200:
@@ -218,8 +227,8 @@ ip_marshaller = {
 climate_schedule_marshaller = {
 	'climate_schedule_id': fields.Integer,
 	'name': fields.String,
-	'start_time': fields.DateTime,
-	'end_time': fields.DateTime,
+	'start_time': fields.String,
+	'end_time': fields.String,
 	"IP": fields.List(fields.Nested(ip_marshaller))
 }
 
@@ -307,8 +316,8 @@ class Room(Resource):
 climate_schedule_log_marshaller = {
 	'climate_schedule_log_id': fields.Integer,
 	'name': fields.String,
-	'start_time': fields.DateTime,
-	'end_time': fields.DateTime,
+	'start_time': fields.String,
+	'end_time': fields.String,
 	'ip_id': fields.Integer,
 }
 climate_log_marshaller = {
@@ -424,8 +433,8 @@ resource_fields = {
 	'climate_schedule_id': fields.Integer,
 	'room_id': fields.Integer,
 	'name': fields.String,
-	'start_time': fields.DateTime,
-	'end_time': fields.DateTime,
+	'start_time': fields.String,
+	'end_time': fields.String,
 	'ip_id': fields.Integer,
 }
 # Define parser and request args
@@ -451,7 +460,7 @@ class RelayScheduleList(Resource):
 class RoomRelayScheduleList(Resource):
 	@marshal_with(resource_fields)
 	def get(self,room_id):
-		print(LOCAL_DT)
+		print(get_local_time())
 		jobs = appscheduler.get_jobs()
 		print(jobs)
 		for job in jobs:
@@ -527,7 +536,11 @@ class RelaySchedule(Resource):
 		results = ClimateScheduleModel.query.filter_by(climate_schedule_id=schedule_id, IP=ip_id,room=rooms).first()
 		if results:
 			abort(409, message="Schedule {} already exist".format(schedule_id))
-		schedule = ClimateScheduleModel(climate_schedule_id=schedule_id, name=args['name'], start_time=args['start_time'], end_time=args['end_time'], how_often=args['how_often'], IP=ip_id,room=rooms)
+		start_display = args['start_time'].strftime("%I:%M %p")
+		end_display = args['end_time'].strftime("%I:%M %p")
+		schedule = ClimateScheduleModel(climate_schedule_id=schedule_id,
+			name=args['name'], start_time=start_display, end_time=end_display, how_often=args['how_often'], IP=ip_id, room=rooms)
+
 		db.session.add(schedule)
 		db.session.commit()
 
@@ -539,8 +552,8 @@ class RelaySchedule(Resource):
 
 		start_triggers = CronTrigger(day_of_week=args['how_often'],hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(day_of_week=args['how_often'],hour=end_hour, minute=end_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip, args['start_time'], args['end_time']], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
 		return schedule, 201
 
 	@marshal_with(resource_fields)
@@ -556,8 +569,8 @@ class RelaySchedule(Resource):
 		args['start_time']=datetime.strptime(args['start_time'], '%Y-%m-%d %H:%M')
 		args['end_time']=datetime.strptime(args['end_time'], '%Y-%m-%d %H:%M')
 		# schedule.name = args['name']
-		schedule.start_time = args['start_time']
-		schedule.end_time = args['end_time']
+		schedule.start_time = args['start_time'].strftime("%I:%M %p")
+		schedule.end_time = args['end_time'].strftime("%I:%M %p")
 		schedule.how_often = args['how_often']
 		if schedule.IP.state:
 			check_ip_state(schedule.IP)
@@ -574,8 +587,8 @@ class RelaySchedule(Resource):
 			day_of_week=args['how_often'], hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(
 			day_of_week=args['how_often'], hour=end_hour, minute=end_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip, args['start_time'], args['end_time']], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
 		return 'Successfuly Updated', 204
 
 	def delete(self,room_id,schedule_id):
@@ -761,8 +774,8 @@ class RelayInterval(Resource):
 
 		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
 		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
-		appscheduler.add_job(start_task,start_triggers,id=f'{interval_id}-interval-start',args=['low',interval.IP.ip, args['start_time'], args['end_time']],replace_existing=True)
-		appscheduler.add_job(end_task,end_triggers,id=f'{interval_id}-interval-end',args=['high', interval.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(start_task,start_triggers,id=f'{interval_id}-interval-start',args=['low',interval.IP.ip],replace_existing=True)
+		appscheduler.add_job(end_task,end_triggers,id=f'{interval_id}-interval-end',args=['high', interval.IP.ip], replace_existing=True)
 		return interval, 201
 
 	@marshal_with(resource_fields)
@@ -804,8 +817,8 @@ class RelayInterval(Resource):
 			duration_minute = f"*/{str(args['duration_minute'])}"
 		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
 		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip, args['start_time'], args['end_time']], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip,args['start_time'], args['end_time']], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
 		return 'Successfuly Updated', 204
 
 	def delete(self,room_id,interval_id):
@@ -1071,6 +1084,7 @@ class Climate(Resource):
 			# ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
 			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
 			ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
+			# ws = create_connection(f"ws://192.168.1.37:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 			result = ws.recv()
 			print("Received '%s'" % result)
@@ -1161,7 +1175,7 @@ class RelayControl(Resource):
 		relay_res = requests.get(relay_url)
 		if relay_res.status_code == 200:
 			if args["state"] == 'low':
-				logs = ClimateScheduleLogModel(name=ips.name, start_time=LOCAL_DT, end_time=LOCAL_DT, end_time_flag=True, IP=ips)
+				logs = ClimateScheduleLogModel(name=ips.name, start_time=get_local_time(), end_time=get_local_time(), end_time_flag=True, IP=ips)
 				db.session.add(logs)
 				db.session.commit()
 				ips.state = True
@@ -1169,7 +1183,7 @@ class RelayControl(Resource):
 				logs = ClimateScheduleLogModel.query.filter_by(IP=ips).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 				if logs.end_time_flag:
 					logs.end_time_flag = False
-					logs.end_time = LOCAL_DT
+					logs.end_time = get_local_time()
 					db.session.add(logs)
 					db.session.commit()
 				ips.state = False
