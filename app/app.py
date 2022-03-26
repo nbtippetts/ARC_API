@@ -17,23 +17,23 @@ import os
 
 app = Flask(__name__)
 api = Api(app)
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-	os.getenv('DB_USER', 'flask'),
-	os.getenv('DB_PASSWORD', ''),
-	os.getenv('DB_HOST', 'mariadb'),
-	os.getenv('DB_NAME', 'flask')
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+# 	os.getenv('DB_USER', 'flask'),
+# 	os.getenv('DB_PASSWORD', ''),
+# 	os.getenv('DB_HOST', 'mariadb'),
+# 	os.getenv('DB_NAME', 'flask')
+# )
 db = SQLAlchemy(app)
 
 jobstores = {
-	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-		os.getenv('DB_USER', 'flask'),
-		os.getenv('DB_PASSWORD', ''),
-		os.getenv('DB_HOST', 'mariadb'),
-		os.getenv('DB_NAME', 'flask')
-	))
+	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+	# 	os.getenv('DB_USER', 'flask'),
+	# 	os.getenv('DB_PASSWORD', ''),
+	# 	os.getenv('DB_HOST', 'mariadb'),
+	# 	os.getenv('DB_NAME', 'flask')
+	# ))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -116,11 +116,23 @@ class ClimateModel(db.Model):
 	humidity_parameters = db.Column(db.Integer, nullable=False)
 	temperature_parameters = db.Column(db.Integer, nullable=False)
 	buffer_parameters = db.Column(db.Integer, default=0, nullable=False)
+	co2_buffer_parameters = db.Column(db.Integer, default=0, nullable=False)
 	co2_relay_ip = db.Column(db.String(20), nullable=False)
 	humidity_relay_ip = db.Column(db.String(20), nullable=False)
 	exhaust_relay_ip = db.Column(db.String(20), nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
+	climate_day_night = db.relationship(
+		'ClimateDayNightModel', cascade='all, delete', backref='climate', lazy='joined')
+	timestamp = db.Column(
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
+	)
+class ClimateDayNightModel(db.Model):
+	__tablename__ = 'climate_day_night'
+	id = db.Column(db.Integer, primary_key=True)
+	climate_start_time = db.Column(db.Time, default=None)
+	climate_end_time = db.Column(db.Time, default=None)
+	climate_id = db.Column(db.Integer, db.ForeignKey('climate.climate_id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
@@ -241,17 +253,25 @@ climate_interval_marshaller = {
 	'duration_minute': fields.Integer,
 	"IP": fields.List(fields.Nested(ip_marshaller))
 }
+climate_day_night_marshaller = {
+	'id': fields.Integer,
+	'climate_start_time': fields.String,
+	'climate_end_time': fields.String,
+	'climate_id': fields.Integer,
+}
 
 climate_marshaller = {
 	'climate_id': fields.Integer,
 	'name': fields.String,
 	'buffer_parameters': fields.Integer,
+	'co2_buffer_parameters': fields.Integer,
 	'co2_parameters': fields.Integer,
 	'humidity_parameters': fields.Integer,
 	'temperature_parameters': fields.Integer,
 	'co2_relay_ip': fields.String,
 	'humidity_relay_ip': fields.String,
 	'exhaust_relay_ip': fields.String,
+	"climate_day_night": fields.List(fields.Nested(climate_day_night_marshaller))
 }
 
 resource_fields = {
@@ -865,17 +885,26 @@ class RelayInterval(Resource):
 		return 'SUCCESS', 204
 
 
+climate_day_night_marshaller = {
+	'id': fields.Integer,
+	'climate_start_time': fields.String,
+	'climate_end_time': fields.String,
+	'climate_id': fields.Integer,
+}
+
 resource_fields = {
 	'climate_id': fields.Integer,
 	'room_id': fields.Integer,
 	'name':fields.String,
 	'buffer_parameters':fields.Integer,
+	'co2_buffer_parameters':fields.Integer,
 	'co2_parameters':fields.Integer,
 	'humidity_parameters':fields.Integer,
 	'temperature_parameters':fields.Integer,
 	'co2_relay_ip':fields.String,
 	'humidity_relay_ip':fields.String,
 	'exhaust_relay_ip':fields.String,
+	"climate_day_night": fields.List(fields.Nested(climate_day_night_marshaller))
 }
 climate_ips_resource_fields = {
 	'id': fields.Integer,
@@ -886,9 +915,12 @@ climate_ips_resource_fields = {
 climate_parameters_parser = reqparse.RequestParser()
 climate_parameters_parser.add_argument('name', type=str, help='Invalid Room', required=True)
 climate_parameters_parser.add_argument('buffer_parameters', type=int, help='Invalid Buffer INT', required=True)
+climate_parameters_parser.add_argument('co2_buffer_parameters', type=int, help='Invalid Buffer INT', required=True)
 climate_parameters_parser.add_argument('co2_parameters', type=int, help='Invalid CO2 Data', required=True)
 climate_parameters_parser.add_argument('humidity_parameters', type=int, help='Invalid Humidity Data', required=True)
 climate_parameters_parser.add_argument('temperature_parameters', type=int, help='Invalid Temperature Data', required=True)
+climate_parameters_parser.add_argument('climate_start_time', type=str, help='Invalid climate start date', required=False)
+climate_parameters_parser.add_argument('climate_end_time', type=str, help='Invalid climate end date', required=False)
 climate_parameters_parser.add_argument('co2_relay_ip', type=str, help='Invalid CO2 IP', required=True)
 climate_parameters_parser.add_argument('humidity_relay_ip', type=str, help='Invalid Humidity IP', required=True)
 climate_parameters_parser.add_argument('exhaust_relay_ip', type=str, help='Invalid Temperature IP', required=True)
@@ -977,10 +1009,29 @@ class ClimateParameters(Resource):
 				if ips.state:
 					check_ip_state(ips)
 
-		climate = ClimateModel(climate_id=climate_parameter_id, name=args['name'], co2_parameters=args['co2_parameters'], humidity_parameters=args['humidity_parameters'],
-			temperature_parameters=args['temperature_parameters'], buffer_parameters=args['buffer_parameters'], co2_relay_ip=args['co2_relay_ip'], humidity_relay_ip=args['humidity_relay_ip'], exhaust_relay_ip=args['exhaust_relay_ip'], IP=ips, room=rooms)
+		climate = ClimateModel(
+			climate_id=climate_parameter_id,
+			name=args['name'],
+			co2_parameters=args['co2_parameters'],
+			humidity_parameters=args['humidity_parameters'],
+			temperature_parameters=args['temperature_parameters'],
+			buffer_parameters=args['buffer_parameters'],
+			co2_buffer_parameters=args['co2_buffer_parameters'],
+			co2_relay_ip=args['co2_relay_ip'],
+			humidity_relay_ip=args['humidity_relay_ip'],
+			exhaust_relay_ip=args['exhaust_relay_ip'],
+			IP=ips, room=rooms
+		)
 		db.session.add(climate)
 		db.session.commit()
+		if args['climate_start_time'] is not None:
+			climate_day_night = ClimateDayNightModel(
+				climate_start_time=args['climate_start_time'],
+				climate_end_time=args['climate_end_time'],
+				climate=climate
+			)
+			db.session.add(climate_day_night)
+			db.session.commit()
 		return results, 201
 
 	@marshal_with(resource_fields)
@@ -1045,12 +1096,20 @@ class ClimateParameters(Resource):
 		climate.humidity_parameters = args['humidity_parameters']
 		climate.temperature_parameters = args['temperature_parameters']
 		climate.buffer_parameters = args['buffer_parameters']
+		climate.co2_buffer_parameters = args['co2_buffer_parameters']
 		climate.co2_relay_ip = args['co2_relay_ip']
 		climate.humidity_relay_ip = args['humidity_relay_ip']
 		climate.exhaust_relay_ip = args['exhaust_relay_ip']
 
 		db.session.add(climate)
 		db.session.commit()
+		climate_day_night = ClimateDayNightModel.query.filter_by(climate=climate).first()
+		if climate_day_night:
+			climate_day_night.climate_start_time = args['climate_start_time'],
+			climate_day_night.climate_end_time = args['climate_end_time'],
+			db.session.add(climate_day_night)
+			db.session.commit()
+
 		return climate, 204
 
 	def delete(self,room_id, climate_parameter_id):
@@ -1065,6 +1124,17 @@ class ClimateParameters(Resource):
 		return 'SUCCESS', 204
 
 
+
+def is_time_between(begin_time, end_time):
+	local_tz = get_localzone()
+	now_dt = datetime.now().time()
+	now_local_dt = now_dt.replace(tzinfo=local_tz)
+	if begin_time < end_time:
+		return now_local_dt >= begin_time and now_local_dt <= end_time
+	else:  # crosses midnight
+		return now_local_dt >= begin_time or now_local_dt <= end_time
+
+
 climate_parser = reqparse.RequestParser()
 climate_parser.add_argument('co2', type=int, help='Invalid CO2')
 climate_parser.add_argument('humidity', type=float, help='Invalid Humidity')
@@ -1075,15 +1145,15 @@ class Climate(Resource):
 		args = climate_parser.parse_args()
 		print(args)
 
-		# ips = IPModel.query.filter_by(ip='192.168.0.133').first()
-		print(request.remote_addr)
-		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		ips = IPModel.query.filter_by(ip='192.168.0.133').first()
+		# print(request.remote_addr)
+		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
 		try:
 			# ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
-			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
-			ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
+			ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
+			# ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
 			# ws = create_connection(f"ws://192.168.1.37:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 			result = ws.recv()
@@ -1093,20 +1163,32 @@ class Climate(Resource):
 			print(e)
 			pass
 
-		climate = ClimateModel.query.filter_by(IP=ips).first()
+		climate = ClimateModel.query.filter_by(IP=ips).all()
 		if not climate:
 			abort(409, message="Climate {} does not exist".format(1))
+		for c in climate:
+			climate_day_night = ClimateDayNightModel.query.filter_by(climate=c).first()
+			if climate_day_night:
+				check_time = is_time_between(
+					climate_day_night.climate_start_time, climate_day_night.climate_end_time)
+				print(check_time)
+				if check_time:
+					climate = c
+				else:
+					climate = ClimateModel.query.filter_by(IP=ips).first()
 
+
+		co2_buffer = climate.co2_parameters+climate.co2_buffer_parameters
 		humidity_plus = climate.humidity_parameters+climate.buffer_parameters
 		humidity_minus = climate.humidity_parameters-climate.buffer_parameters
-		temperature_parameters = climate.temperature_parameters+climate.buffer_parameters
+		temperature_buffer = climate.temperature_parameters+climate.buffer_parameters
 		try:
 			if climate.co2_relay_ip =='False':
 				print('do nothing')
 			else:
-				if args['co2'] <= climate.co2_parameters:
+				if args['co2'] <= co2_buffer:
 					start_task('low',climate.co2_relay_ip)
-				elif args['co2'] >= climate.co2_parameters:
+				elif args['co2'] >= co2_buffer:
 					end_task('high', climate.co2_relay_ip)
 				else:
 					print('co2 do nothing')
@@ -1118,11 +1200,11 @@ class Climate(Resource):
 			if climate.exhaust_relay_ip == 'False':
 				print('do nothing')
 			else:
-				if args['temperature'] >= temperature_parameters:
+				if args['temperature'] >= temperature_buffer:
 					start_task('low', climate.exhaust_relay_ip)
-				elif args['temperature'] <= temperature_parameters and args['humidity'] >= humidity_plus:
+				elif args['temperature'] <= temperature_buffer and args['humidity'] >= humidity_plus:
 					start_task('low', climate.exhaust_relay_ip)
-				elif args['temperature'] <= temperature_parameters:
+				elif args['temperature'] <= temperature_buffer:
 					end_task('high', climate.exhaust_relay_ip)
 				else:
 					print('temp do nothing')
