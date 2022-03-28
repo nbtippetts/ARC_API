@@ -17,23 +17,23 @@ import os
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-# 	os.getenv('DB_USER', 'flask'),
-# 	os.getenv('DB_PASSWORD', ''),
-# 	os.getenv('DB_HOST', 'mariadb'),
-# 	os.getenv('DB_NAME', 'flask')
-# )
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+	os.getenv('DB_USER', 'flask'),
+	os.getenv('DB_PASSWORD', ''),
+	os.getenv('DB_HOST', 'mariadb'),
+	os.getenv('DB_NAME', 'flask')
+)
 db = SQLAlchemy(app)
 
 jobstores = {
-	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-	# 	os.getenv('DB_USER', 'flask'),
-	# 	os.getenv('DB_PASSWORD', ''),
-	# 	os.getenv('DB_HOST', 'mariadb'),
-	# 	os.getenv('DB_NAME', 'flask')
-	# ))
+	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+		os.getenv('DB_USER', 'flask'),
+		os.getenv('DB_PASSWORD', ''),
+		os.getenv('DB_HOST', 'mariadb'),
+		os.getenv('DB_NAME', 'flask')
+	))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -185,6 +185,43 @@ def get_local_time():
 	return local_time
 
 
+def is_time_between(begin_time, end_time):
+	local_tz = get_localzone()
+	now_dt = datetime.now().time()
+	now_local_dt = now_dt.replace(tzinfo=local_tz)
+	if begin_time < end_time:
+		return now_local_dt >= begin_time and now_local_dt <= end_time
+	else:  # crosses midnight
+		return now_local_dt >= begin_time or now_local_dt <= end_time
+
+# def start_task(*args):
+# 	print(args)
+# 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
+# 	if ip_state.state == False:
+# 		logs = ClimateScheduleLogModel(name=ip_state.name, start_time=get_local_time(), end_time=get_local_time(), end_time_flag=True, IP=ip_state)
+# 		db.session.add(logs)
+# 		db.session.commit()
+# 		ip_state.state=True
+# 	else:
+# 		ip_state.state=False
+
+# 	db.session.add(ip_state)
+# 	db.session.commit()
+# 	# print(url)
+# 	return args
+# def end_task(*args):
+# 	print(args)
+# 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
+# 	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
+# 	if logs.end_time_flag:
+# 		logs.end_time_flag = False
+# 		logs.end_time = get_local_time()
+# 		db.session.add(logs)
+# 		db.session.commit()
+# 		ip_state.state = False
+# 		db.session.add(ip_state)
+# 		db.session.commit()
+# 	return args
 def start_task(*args):
 	print(args)
 	url = f'http://{args[1]}/?v={args[0]}'
@@ -196,11 +233,8 @@ def start_task(*args):
 			db.session.add(logs)
 			db.session.commit()
 			ip_state.state=True
-	else:
-		ip_state.state=False
-
-	db.session.add(ip_state)
-	db.session.commit()
+			db.session.add(ip_state)
+			db.session.commit()
 	# print(url)
 	return args
 def end_task(*args):
@@ -208,18 +242,17 @@ def end_task(*args):
 	url = f'http://{args[1]}/?v={args[0]}'
 	res = requests.get(url)
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
-	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
-	if logs.end_time_flag:
-		logs.end_time_flag = False
-		logs.end_time = get_local_time()
-		db.session.add(logs)
-		db.session.commit()
 	if res.status_code == 200:
-		ip_state.state = False
-	else:
-		ip_state.state = True
-	db.session.add(ip_state)
-	db.session.commit()
+		logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
+		if logs.end_time_flag:
+			logs.end_time_flag = False
+			logs.end_time = get_local_time()
+			db.session.add(logs)
+			db.session.commit()
+			ip_state.state = False
+			db.session.add(ip_state)
+			db.session.commit()
+
 	return args
 
 def check_ip_state(ip):
@@ -300,6 +333,14 @@ class Room(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id):
 		results = RoomModel.query.filter_by(id=room_id).first()
+		if results.climate:
+			for climate in results.climate:
+				if climate.climate_day_night:
+					for climate_time in climate.climate_day_night:
+						climate_time.climate_start_time = climate_time.climate_start_time.strftime("%I:%M %p")
+						climate_time.climate_end_time = climate_time.climate_end_time.strftime("%I:%M %p")
+						print(climate_time)
+
 		return results, 200
 
 	@marshal_with(resource_fields)
@@ -1124,17 +1165,6 @@ class ClimateParameters(Resource):
 		return 'SUCCESS', 204
 
 
-
-def is_time_between(begin_time, end_time):
-	local_tz = get_localzone()
-	now_dt = datetime.now().time()
-	now_local_dt = now_dt.replace(tzinfo=local_tz)
-	if begin_time < end_time:
-		return now_local_dt >= begin_time and now_local_dt <= end_time
-	else:  # crosses midnight
-		return now_local_dt >= begin_time or now_local_dt <= end_time
-
-
 climate_parser = reqparse.RequestParser()
 climate_parser.add_argument('co2', type=int, help='Invalid CO2')
 climate_parser.add_argument('humidity', type=float, help='Invalid Humidity')
@@ -1145,16 +1175,16 @@ class Climate(Resource):
 		args = climate_parser.parse_args()
 		print(args)
 
-		ips = IPModel.query.filter_by(ip='192.168.0.133').first()
-		# print(request.remote_addr)
-		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		# ips = IPModel.query.filter_by(ip='192.168.0.133').first()
+		print(request.remote_addr)
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
 		try:
 			# ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
-			ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
+			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
 			# ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
-			# ws = create_connection(f"ws://192.168.1.37:8000/ws/socket-server/")
+			ws = create_connection(f"ws://192.168.1.37:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 			result = ws.recv()
 			print("Received '%s'" % result)
@@ -1234,7 +1264,8 @@ class ClimateLog(Resource):
 		args = climate_parser.parse_args()
 		print(args)
 		# ips = IPModel.query.filter_by(ip='192.168.1.12').first()
-		ips = IPModel.query.filter_by(ip=request.remote_addr).first()
+		print(request.remote_addr)
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
 		climate_log = ClimateLogModel(
@@ -1253,34 +1284,12 @@ class RelayControl(Resource):
 		ips = IPModel.query.filter_by(ip=args["ip"]).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
-		relay_url = f'http://{args["ip"]}/?v={args["state"]}'
-		relay_res = requests.get(relay_url)
-		if relay_res.status_code == 200:
-			if args["state"] == 'low':
-				logs = ClimateScheduleLogModel(name=ips.name, start_time=get_local_time(), end_time=get_local_time(), end_time_flag=True, IP=ips)
-				db.session.add(logs)
-				db.session.commit()
-				ips.state = True
-			elif args["state"] == 'high':
-				logs = ClimateScheduleLogModel.query.filter_by(IP=ips).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
-				if logs.end_time_flag:
-					logs.end_time_flag = False
-					logs.end_time = get_local_time()
-					db.session.add(logs)
-					db.session.commit()
-				ips.state = False
-		else:
-			ips.state = False
 
-		db.session.add(ips)
-		db.session.commit()
+		if args["state"] == 'low':
+			start_task('low', args["ip"])
+		if args["state"] == 'high':
+			end_task('high', args["ip"])
 		return 'SUCCESS', 200
-
-
-# class ScheduleLogs(Resource):
-# 	def get(self,ip_id):
-
-
 
 
 api.add_resource(Room, '/room/<int:room_id>')
