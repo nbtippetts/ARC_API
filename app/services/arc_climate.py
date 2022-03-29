@@ -1,5 +1,6 @@
 from flask_restful import Resource, reqparse, abort, fields, marshal_with, request
-from app import db, appscheduler, RoomModel, IPModel, ClimateScheduleModel, ClimateModel, ClimateIntervalModel, ClimateDayNightModel, ClimateLogModel
+from app.services import appscheduler
+from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateModel, ClimateIntervalModel, ClimateDayNightModel, ClimateLogModel, db
 from common.util import check_ip_state, start_task, end_task, is_time_between
 from websocket import create_connection
 import json
@@ -59,10 +60,10 @@ climate_parameters_parser.add_argument(
 class ClimateParametersIPList(Resource):
 	@marshal_with(climate_ips_resource_fields)
 	def get(self, room_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		check_ips = db.IPModel.query.filter_by(room=rooms).all()
+		check_ips = IPModel.query.filter_by(room=rooms).all()
 		valid_ips = []
 		ips_names = ['Exhaust', 'Humidity', 'CO2']
 		for ips in check_ips:
@@ -74,39 +75,39 @@ class ClimateParametersIPList(Resource):
 class ClimateParametersList(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		climate = db.ClimateModel.query.filter_by(room=rooms).all()
+		climate = ClimateModel.query.filter_by(room=rooms).all()
 		return climate, 200
 
 
 class ClimateParameters(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id, climate_parameter_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		results = db.ClimateModel.query.filter_by(
+		results = ClimateModel.query.filter_by(
 			climate_id=climate_parameter_id, room=rooms).first()
 		return results, 200
 
 	@marshal_with(resource_fields)
 	def put(self, room_id, climate_parameter_id):
 		args = climate_parameters_parser.parse_args()
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		ips = db.IPModel.query.filter_by(name='Climate', room=rooms).first()
+		ips = IPModel.query.filter_by(name='Climate', room=rooms).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(ips))
-		results = db.ClimateModel.query.filter_by(
+		results = ClimateModel.query.filter_by(
 			climate_id=climate_parameter_id, room=rooms).first()
 		if results:
 			abort(409, message="Climate {} already exist".format(climate_parameter_id))
 
-		check_interval = db.ClimateIntervalModel.query.filter(
-			db.ClimateIntervalModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
+		check_interval = ClimateIntervalModel.query.filter(
+			ClimateIntervalModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
 		if check_interval:
 			for interval_id in check_interval:
 				start_job = appscheduler.get_job(
@@ -128,8 +129,8 @@ class ClimateParameters(Resource):
 				db.session.commit()
 				if ips.state:
 					check_ip_state(ips)
-		check_schedule = db.ClimateScheduleModel.query.filter(
-			db.ClimateScheduleModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
+		check_schedule = ClimateScheduleModel.query.filter(
+			ClimateScheduleModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
 		if check_schedule:
 			for schedule_id in check_schedule:
 				start_job = appscheduler.get_job(
@@ -178,17 +179,17 @@ class ClimateParameters(Resource):
 	@marshal_with(resource_fields)
 	def patch(self, room_id, climate_parameter_id):
 		args = climate_parameters_parser.parse_args()
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		climate = db.ClimateModel.query.filter_by(
+		climate = ClimateModel.query.filter_by(
 			climate_id=climate_parameter_id, room=rooms).first()
 		if not climate:
 			abort(409, message="Climate Parameters {} doesn't exist, cannot update.".format(
 				climate_parameter_id))
 
-		check_interval = db.ClimateIntervalModel.query.filter(
-			db.ClimateIntervalModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
+		check_interval = ClimateIntervalModel.query.filter(
+			ClimateIntervalModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
 		if check_interval:
 			for interval_id in check_interval:
 				start_job = appscheduler.get_job(
@@ -212,8 +213,8 @@ class ClimateParameters(Resource):
 				db.session.delete(interval_id)
 				db.session.commit()
 
-		check_schedule = db.ClimateScheduleModel.query.filter(
-			db.ClimateScheduleModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
+		check_schedule = ClimateScheduleModel.query.filter(
+			ClimateScheduleModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
 		if check_schedule:
 			for schedule_id in check_schedule:
 				start_job = appscheduler.get_job(
@@ -247,7 +248,7 @@ class ClimateParameters(Resource):
 
 		db.session.add(climate)
 		db.session.commit()
-		climate_day_night = db.ClimateDayNightModel.query.filter_by(
+		climate_day_night = ClimateDayNightModel.query.filter_by(
 			climate=climate).first()
 		if climate_day_night:
 			climate_day_night.climate_start_time = args['climate_start_time'],
@@ -258,10 +259,10 @@ class ClimateParameters(Resource):
 		return climate, 204
 
 	def delete(self, room_id, climate_parameter_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		climate = db.ClimateModel.query.filter_by(
+		climate = ClimateModel.query.filter_by(
 			climate_id=climate_parameter_id, room=rooms).first()
 		if not climate:
 			abort(409, message="climate {} doesn't exist, cannot Delete.".format(
@@ -283,9 +284,9 @@ class Climate(Resource):
 		args = climate_parser.parse_args()
 		print(args)
 
-		# ips = db.IPModel.query.filter_by(ip='192.168.0.133').first()
+		# ips = IPModel.query.filter_by(ip='192.168.0.133').first()
 		print(request.remote_addr)
-		ips = db.IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
 		try:
@@ -301,11 +302,11 @@ class Climate(Resource):
 			print(e)
 			pass
 
-		climate = db.ClimateModel.query.filter_by(IP=ips).all()
+		climate = ClimateModel.query.filter_by(IP=ips).all()
 		if not climate:
 			abort(409, message="Climate {} does not exist".format(1))
 		for c in climate:
-			climate_day_night = db.ClimateDayNightModel.query.filter_by(climate=c).first()
+			climate_day_night = ClimateDayNightModel.query.filter_by(climate=c).first()
 			if climate_day_night:
 				check_time = is_time_between(
 					climate_day_night.climate_start_time, climate_day_night.climate_end_time)
@@ -313,7 +314,7 @@ class Climate(Resource):
 				if check_time:
 					climate = c
 				else:
-					climate = db.ClimateModel.query.filter_by(IP=ips).first()
+					climate = ClimateModel.query.filter_by(IP=ips).first()
 
 		co2_buffer = climate.co2_parameters+climate.co2_buffer_parameters
 		humidity_plus = climate.humidity_parameters+climate.buffer_parameters
@@ -370,9 +371,9 @@ class ClimateLog(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
-		# ips = db.IPModel.query.filter_by(ip='192.168.1.12').first()
+		# ips = IPModel.query.filter_by(ip='192.168.1.12').first()
 		print(request.remote_addr)
-		ips = db.IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
 		climate_log = ClimateLogModel(

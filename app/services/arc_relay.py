@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse, abort
-from app import IPModel
+from app.models import IPModel, db
 from common.util import start_task, end_task
 
 relay_parser = reqparse.RequestParser()
@@ -10,7 +10,7 @@ relay_parser.add_argument('state', type=str, help='Invalid State')
 class RelayControl(Resource):
 	def get(self):
 		args = relay_parser.parse_args()
-		ips = db.IPModel.query.filter_by(ip=args["ip"]).first()
+		ips = IPModel.query.filter_by(ip=args["ip"]).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
 

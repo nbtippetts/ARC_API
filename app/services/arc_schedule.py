@@ -1,5 +1,6 @@
-from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
-from app import db, appscheduler, RoomModel, IPModel, ClimateScheduleModel, ClimateModel, ClimateIntervalModel
+from flask_restful import Resource,reqparse, abort, fields, marshal_with
+from app.services import appscheduler
+from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateModel, ClimateIntervalModel, db
 from common.util import get_local_time, check_ip_state, start_task, end_task
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime
@@ -29,7 +30,7 @@ class RelayScheduleList(Resource):
 		for job in jobs:
 			print(job.trigger)
 
-		results = db.ClimateScheduleModel.query.all()
+		results = ClimateScheduleModel.query.all()
 		return results, 200
 
 
@@ -41,10 +42,10 @@ class RoomRelayScheduleList(Resource):
 		print(jobs)
 		for job in jobs:
 			print(job.trigger)
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		results = db.ClimateScheduleModel.query.filter_by(room=rooms).all()
+		results = ClimateScheduleModel.query.filter_by(room=rooms).all()
 		return results, 200
 
 
@@ -55,10 +56,10 @@ class RelaySchedule(Resource):
 		print(jobs)
 		for job in jobs:
 			print(job.trigger)
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		results = db.ClimateScheduleModel.query.filter_by(
+		results = ClimateScheduleModel.query.filter_by(
 			climate_schedule_id=schedule_id, room=rooms).first()
 		return results, 200
 
@@ -67,17 +68,17 @@ class RelaySchedule(Resource):
 		args = parser.parse_args()
 		args['start_time'] = datetime.strptime(args['start_time'], '%Y-%m-%d %H:%M')
 		args['end_time'] = datetime.strptime(args['end_time'], '%Y-%m-%d %H:%M')
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		ip_id = db.IPModel.query.filter_by(id=args['ip_id']).first()
+		ip_id = IPModel.query.filter_by(id=args['ip_id']).first()
 		if not ip_id:
 			abort(409, message="IP {} does not exist".format(ip_id))
 
-		remove_ip = db.ClimateModel.query.filter(
-			(db.ClimateModel.co2_relay_ip == ip_id.ip) |
-			(db.ClimateModel.humidity_relay_ip == ip_id.ip) |
-			(db.ClimateModel.exhaust_relay_ip == ip_id.ip)
+		remove_ip = ClimateModel.query.filter(
+			(ClimateModel.co2_relay_ip == ip_id.ip) |
+			(ClimateModel.humidity_relay_ip == ip_id.ip) |
+			(ClimateModel.exhaust_relay_ip == ip_id.ip)
 		).first()
 		if remove_ip:
 			if remove_ip.co2_relay_ip == ip_id.ip:
@@ -95,7 +96,7 @@ class RelaySchedule(Resource):
 
 			db.session.add(remove_ip)
 			db.session.commit()
-		check_interval = db.ClimateIntervalModel.query.filter_by(IP=ip_id).first()
+		check_interval = ClimateIntervalModel.query.filter_by(IP=ip_id).first()
 		if check_interval:
 			start_job = appscheduler.get_job(
 				f'{check_interval.climate_interval_id}-interval-start')
@@ -117,7 +118,7 @@ class RelaySchedule(Resource):
 			db.session.commit()
 			if ip_id.state:
 				check_ip_state(ip_id)
-		results = db.ClimateScheduleModel.query.filter_by(
+		results = ClimateScheduleModel.query.filter_by(
 			climate_schedule_id=schedule_id, IP=ip_id, room=rooms).first()
 		if results:
 			abort(409, message="Schedule {} already exist".format(schedule_id))
@@ -148,10 +149,10 @@ class RelaySchedule(Resource):
 	@marshal_with(resource_fields)
 	def patch(self, room_id, schedule_id):
 		args = parser.parse_args()
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		schedule = db.ClimateScheduleModel.query.filter_by(
+		schedule = ClimateScheduleModel.query.filter_by(
 			climate_schedule_id=schedule_id, room=rooms).first()
 		if not schedule:
 			abort(409, message="Schedule {} doesn't exist, cannot update.".format(schedule_id))
@@ -184,27 +185,27 @@ class RelaySchedule(Resource):
 		return 'Successfuly Updated', 204
 
 	def delete(self, room_id, schedule_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		schedule = db.ClimateScheduleModel.query.filter_by(
+		schedule = ClimateScheduleModel.query.filter_by(
 			climate_schedule_id=schedule_id, room=rooms).first()
 		if not schedule:
 			abort(409, message="Schedule {} doesn't exist, cannot Delete.".format(schedule_id))
 		if schedule.name == "CO2":
-			add_ip = db.ClimateModel.query.filter_by(co2_relay_ip='False').first()
+			add_ip = ClimateModel.query.filter_by(co2_relay_ip='False').first()
 			if add_ip:
 				add_ip.co2_relay_ip = schedule.IP.ip
 				db.session.add(add_ip)
 				db.session.commit()
 		if schedule.name == "Humidity":
-			add_ip = db.ClimateModel.query.filter_by(humidity_relay_ip='False').first()
+			add_ip = ClimateModel.query.filter_by(humidity_relay_ip='False').first()
 			if add_ip:
 				add_ip.humidity_relay_ip = schedule.IP.ip
 				db.session.add(add_ip)
 				db.session.commit()
 		if schedule.name == "Exhaust":
-			add_ip = db.ClimateModel.query.filter_by(exhaust_relay_ip='False').first()
+			add_ip = ClimateModel.query.filter_by(exhaust_relay_ip='False').first()
 			if add_ip:
 				add_ip.exhaust_relay_ip = schedule.IP.ip
 				db.session.add(add_ip)

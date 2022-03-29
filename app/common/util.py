@@ -1,6 +1,6 @@
 from datetime import datetime
 from tzlocal import get_localzone
-from app import db, IPModel, ClimateScheduleLogModel
+from app.models import db, IPModel, ClimateScheduleLogModel
 import requests
 def get_local_time():
 	local_tz = get_localzone()
@@ -23,7 +23,7 @@ def is_time_between(begin_time, end_time):
 
 def start_task(*args):
 	print(args)
-	ip_state = db.IPModel.query.filter_by(ip=args[1]).first()
+	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	if ip_state.state == False:
 		logs = ClimateScheduleLogModel(name=ip_state.name, start_time=get_local_time(
 		), end_time=get_local_time(), end_time_flag=True, IP=ip_state)
@@ -38,7 +38,7 @@ def start_task(*args):
 
 def end_task(*args):
 	print(args)
-	ip_state = db.IPModel.query.filter_by(ip=args[1]).first()
+	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	logs = db.ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(
 		db.ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 	if logs.end_time_flag:
@@ -55,7 +55,7 @@ def end_task(*args):
 # 	print(args)
 # 	url = f'http://{args[1]}/?v={args[0]}'
 # 	res = requests.get(url)
-# 	ip_state = db.IPModel.query.filter_by(ip=args[1]).first()
+# 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 # 	if res.status_code == 200:
 # 		if ip_state.state == False:
 # 			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=get_local_time(
@@ -73,7 +73,7 @@ def end_task(*args):
 # 	print(args)
 # 	url = f'http://{args[1]}/?v={args[0]}'
 # 	res = requests.get(url)
-# 	ip_state = db.IPModel.query.filter_by(ip=args[1]).first()
+# 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 # 	if res.status_code == 200:
 # 		logs = db.ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(
 # 			db.ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()

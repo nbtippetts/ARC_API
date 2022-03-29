@@ -1,5 +1,5 @@
-from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
-from app import db, RoomModel, IPModel
+from flask_restful import Resource, reqparse, abort, fields, marshal_with
+from app.models import RoomModel, IPModel, db
 
 
 ip_marshaller = {
@@ -73,7 +73,7 @@ class RoomList(Resource):
 class Room(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id):
-		results = db.RoomModel.query.filter_by(id=room_id).first()
+		results = RoomModel.query.filter_by(id=room_id).first()
 		if results.climate:
 			for climate in results.climate:
 				if climate.climate_day_night:
@@ -89,7 +89,7 @@ class Room(Resource):
 	@marshal_with(resource_fields)
 	def put(self, room_id):
 		args = room_parser.parse_args()
-		results = db.RoomModel.query.filter_by(id=room_id).first()
+		results = RoomModel.query.filter_by(id=room_id).first()
 		if results:
 			abort(409, message=f"Room {room_id} already exist")
 		rooms = RoomModel(id=room_id, name=args['name'])
@@ -100,7 +100,7 @@ class Room(Resource):
 	@marshal_with(resource_fields)
 	def patch(self, room_id):
 		args = room_parser.parse_args()
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} already exist".format(room_id))
 		rooms.name = args['name']
@@ -109,7 +109,7 @@ class Room(Resource):
 		return rooms, 201
 
 	def delete(self, room_id):
-		room = db.RoomModel.query.filter_by(id=room_id).first()
+		room = RoomModel.query.filter_by(id=room_id).first()
 		if not room:
 			abort(409, message="Room {} doesn't exist, cannot Delete.".format(room_id))
 		db.session.delete(room)
@@ -160,7 +160,7 @@ ip_parser.add_argument(
 class IPList(Resource):
 	@marshal_with(resource_fields)
 	def get(self):
-		results = db.IPModel.query.filter_by(room_id=None).all()
+		results = IPModel.query.filter_by(room_id=None).all()
 		if not results:
 			abort(409, message="Room {} does not exist".format(results))
 		return results, 200
@@ -169,14 +169,13 @@ class IPList(Resource):
 class IPLogs(Resource):
 	@marshal_with(logs_resource_fields)
 	def get(self, room_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		# ip_logs = db.IPModel.query.filter_by(room=rooms).all()
-		climate_log = [p.climate_log[:5]
-                 for p in db.IPModel.query.filter_by(room=rooms).all() if p.climate_log]
-		climate_schedule_log = [p.climate_schedule_log[:5] for p in db.IPModel.query.filter_by(
+		# ip_logs = IPModel.query.filter_by(room=rooms).all()
+		climate_log = [p.climate_log[:5]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
+		climate_schedule_log = [p.climate_schedule_log[:5] for p in IPModel.query.filter_by(
 			room=rooms).all() if p.climate_schedule_log]
 
 		return {'climate_log': climate_log, 'climate_schedule_log': climate_schedule_log}, 200
@@ -185,20 +184,20 @@ class IPLogs(Resource):
 class RoomIP(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id, ip_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		ips = db.IPModel.query.filter_by(id=ip_id, room=rooms).first()
+		ips = IPModel.query.filter_by(id=ip_id, room=rooms).first()
 		return ips, 200
 
 	@marshal_with(resource_fields)
 	def patch(self, room_id, ip_id):
 		args = ip_parser.parse_args()
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		ips = db.IPModel.query.filter_by(id=ip_id).first()
+		ips = IPModel.query.filter_by(id=ip_id).first()
 		if not ips:
 			abort(409, message="IP {} doesn't exist, cannot update.".format(ip_id))
 		# ips.name = args['name']
@@ -208,10 +207,10 @@ class RoomIP(Resource):
 		return ips, 201
 
 	def delete(self, room_id, ip_id):
-		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		ips = db.IPModel.query.filter_by(id=ip_id, room=rooms).first()
+		ips = IPModel.query.filter_by(id=ip_id, room=rooms).first()
 		if not ips:
 			abort(409, message="IP {} doesn't exist, cannot update.".format(ip_id))
 
@@ -226,7 +225,7 @@ class AddIP(Resource):
 	def get(self):
 		args = ip_parser.parse_args()
 		print(args)
-		ip_exists = db.IPModel.query.filter_by(ip=args['IP']).first()
+		ip_exists = IPModel.query.filter_by(ip=args['IP']).first()
 		if ip_exists:
 			return ip_exists, 201
 		else:

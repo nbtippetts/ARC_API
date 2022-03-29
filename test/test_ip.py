@@ -28,13 +28,13 @@ for p in payload:
 # class RoomList(Resource):
 # 	@marshal_with(resource_fields)
 # 	def get(self):
-# 		rooms = db.RoomModel.query.all()
+# 		rooms = RoomModel.query.all()
 # 		if not rooms:
 # 			abort(409, message="Rooms do not exist")
 # 		all_rooms = []
 # 		for room in rooms:
 # 			rooms_data = {}
-# 			climate_schedule = db.ClimateScheduleModel.query.filter_by(room=room).all()
+# 			climate_schedule = ClimateScheduleModel.query.filter_by(room=room).all()
 # 			if not climate_schedule:
 # 				rooms_data['climate_schedule'] = []
 # 			else:
@@ -42,7 +42,7 @@ for p in payload:
 # 				rooms_data['climate_schedule'] = [room.climate_schedule_id,
 #                                       room.name, room.start_time, room.end_time, room.how_often, ]
 
-# 			climate = db.ClimateModel.query.filter_by(room=room).all()
+# 			climate = ClimateModel.query.filter_by(room=room).all()
 # 			if not climate:
 # 				rooms_data['climate'] = []
 # 			else:
@@ -50,14 +50,14 @@ for p in payload:
 # 				rooms_data['climate'] = [room.climate_id, room.name, room.co2_parameters, room.humidity_parameters,
 #                                     room.temperature_parameters, room.co2_relay_ip, room.humidity_relay_ip, room.exhaust_relay_ip, ]
 
-# 			ip = db.IPModel.query.filter_by(room=room).all()
+# 			ip = IPModel.query.filter_by(room=room).all()
 # 			if not ip:
 # 				rooms_data['ip'] = []
 # 			else:
 # 				for room in ip:
 # 					rooms_data['ip'] = [room.ip]
 
-# 			notebook = db.NoteBookModel.query.filter_by(room=room).all()
+# 			notebook = NoteBookModel.query.filter_by(room=room).all()
 # 			if not notebook:
 # 				rooms_data['notebook'] = []
 # 			else:

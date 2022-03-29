@@ -1,6 +1,8 @@
-from app import db
 from tzlocal import get_localzone
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 tz = get_localzone()
 print(tz)
@@ -44,7 +46,7 @@ class IPModel(db.Model):
 	climate = db.relationship(
 		'ClimateModel', cascade='all, delete', backref='IP', lazy='joined')
 	climate_log = db.relationship('ClimateLogModel', backref='IP',
-	                              lazy='select', order_by='db.ClimateLogModel.timestamp.desc()')
+	                              lazy='select', order_by='ClimateLogModel.timestamp.desc()')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
@@ -147,5 +149,3 @@ class NoteBookModel(db.Model):
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
 	)
-
-db.create_all()
