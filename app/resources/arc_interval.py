@@ -1,0 +1,248 @@
+from flask_restful import Resource, reqparse, abort, fields, marshal_with
+from app import db, appscheduler, RoomModel, IPModel, ClimateScheduleModel, ClimateModel, ClimateIntervalModel
+from common.util import check_ip_state, start_task, end_task
+from apscheduler.triggers.cron import CronTrigger
+resource_fields = {
+	'climate_interval_id': fields.Integer,
+	'room_id': fields.Integer,
+	'name': fields.String,
+	'interval_hour': fields.Integer,
+	'interval_minute': fields.Integer,
+	'duration_hour': fields.Integer,
+	'duration_minute': fields.Integer,
+	'ip_id': fields.Integer,
+}
+# Define parser and request args
+interval_parser = reqparse.RequestParser()
+interval_parser.add_argument(
+	'name', type=str, help='What are you trying to create a schedule for?', required=False)
+interval_parser.add_argument(
+	'interval_hour', type=int, help='Invalid Interval Hour', required=False)
+interval_parser.add_argument(
+	'interval_minute', type=int, help='Invalid Interval Minute', required=False)
+interval_parser.add_argument(
+	'duration_hour', type=int, help='Invalid Duration Hour', required=False)
+interval_parser.add_argument(
+	'duration_minute', type=int, help='Invalid Duration Minute', required=False)
+interval_parser.add_argument(
+	'ip_id', type=str, help='Invalid IP', required=False)
+
+
+class RelayIntervalList(Resource):
+	@marshal_with(resource_fields)
+	def get(self):
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			print(job.trigger)
+
+		results = db.ClimateIntervalModel.query.all()
+		return results, 200
+
+
+class RoomRelayIntervalList(Resource):
+	@marshal_with(resource_fields)
+	def get(self, room_id):
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			print(job.trigger)
+		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		results = db.ClimateIntervalModel.query.filter_by(room=rooms).all()
+		return results, 200
+
+
+class RelayInterval(Resource):
+	@marshal_with(resource_fields)
+	def get(self, room_id, interval_id):
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			print(job.trigger)
+		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		results = db.ClimateIntervalModel.query.filter_by(
+			climate_interval_id=interval_id, room=rooms).first()
+		return results, 200
+
+	@marshal_with(resource_fields)
+	def put(self, room_id, interval_id):
+		args = interval_parser.parse_args()
+		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		ip_id = db.IPModel.query.filter_by(id=args['ip_id']).first()
+		if not ip_id:
+			abort(409, message="IP {} does not exist".format(ip_id))
+		# db.session.add(ip_id)
+		# db.session.commit()
+		remove_ip = db.ClimateModel.query.filter(
+			(db.ClimateModel.co2_relay_ip == ip_id.ip) |
+			(db.ClimateModel.humidity_relay_ip == ip_id.ip) |
+			(db.ClimateModel.exhaust_relay_ip == ip_id.ip)
+		).first()
+		if remove_ip:
+			if remove_ip.co2_relay_ip == ip_id.ip:
+				remove_ip.co2_relay_ip = 'False'
+				if ip_id.state:
+					check_ip_state(ip_id)
+			if remove_ip.humidity_relay_ip == ip_id.ip:
+				remove_ip.humidity_relay_ip = 'False'
+				if ip_id.state:
+					check_ip_state(ip_id)
+			if remove_ip.exhaust_relay_ip == ip_id.ip:
+				remove_ip.exhaust_relay_ip = 'False'
+				if ip_id.state:
+					check_ip_state(ip_id)
+
+			db.session.add(remove_ip)
+			db.session.commit()
+
+		check_schedule = db.ClimateScheduleModel.query.filter_by(IP=ip_id).first()
+		if check_schedule:
+			start_job = appscheduler.get_job(
+				f'{check_schedule.climate_schedule_id}-start')
+			if not start_job:
+				abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(
+					check_schedule.climate_schedule_id))
+
+			end_job = appscheduler.get_job(f'{check_schedule.climate_schedule_id}-end')
+			if not end_job:
+				abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(
+					check_schedule.climate_schedule_id))
+
+			appscheduler.remove_job(f'{check_schedule.climate_schedule_id}-start')
+			appscheduler.remove_job(f'{check_schedule.climate_schedule_id}-end')
+			db.session.delete(check_schedule)
+			db.session.commit()
+			if ip_id.state:
+				check_ip_state(ip_id)
+
+		results = db.ClimateIntervalModel.query.filter_by(
+			climate_interval_id=interval_id, IP=ip_id, room=rooms).first()
+		if results:
+			abort(409, message="Interval {} already exist".format(interval_id))
+
+		interval = ClimateIntervalModel(climate_interval_id=interval_id, name=args['name'], interval_hour=args['interval_hour'], interval_minute=args[
+		                                'interval_minute'], duration_hour=args['duration_hour'], duration_minute=args['duration_minute'], IP=ip_id, room=rooms)
+		db.session.add(interval)
+		db.session.commit()
+
+		if args['interval_hour'] == 0:
+			interval_hour = '*'
+		else:
+			interval_hour = f"*/{str(args['interval_hour'])}"
+		if args['interval_minute'] == 0:
+			interval_minute = '*'
+		else:
+			interval_minute = f"*/{str(args['interval_minute'])}"
+
+		if args['duration_hour'] == 0:
+			duration_hour = '*'
+		else:
+			duration_hour = f"*/{str(args['duration_hour'])}"
+		if args['duration_minute'] == 0:
+			duration_minute = '*'
+		else:
+			duration_minute = f"*/{str(args['duration_minute'])}"
+
+		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
+		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=[
+		                     'low', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=[
+		                     'high', interval.IP.ip], replace_existing=True)
+		return interval, 201
+
+	@marshal_with(resource_fields)
+	def patch(self, room_id, interval_id):
+		args = interval_parser.parse_args()
+		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		interval = db.ClimateIntervalModel.query.filter_by(
+			climate_interval_id=interval_id, room=rooms).first()
+		if not interval:
+			abort(409, message="Interval {} doesn't exist, cannot update.".format(interval_id))
+
+		# schedule.name = args['name']
+		interval.interval_hour = args['interval_hour']
+		interval.interval_minute = args['interval_minute']
+		interval.duration_hour = args['duration_hour']
+		interval.duration_minute = args['duration_minute']
+		if interval.IP.state:
+			check_ip_state(interval.IP)
+		db.session.add(interval)
+		db.session.commit()
+
+		if args['interval_hour'] == 0:
+			interval_hour = '*'
+		else:
+			interval_hour = f"*/{str(args['interval_hour'])}"
+		if args['interval_minute'] == 0:
+			interval_minute = '*'
+		else:
+			interval_minute = f"*/{str(args['interval_minute'])}"
+
+		if args['duration_hour'] == 0:
+			duration_hour = '*'
+		else:
+			duration_hour = f"*/{str(args['duration_hour'])}"
+		if args['duration_minute'] == 0:
+			duration_minute = '*'
+		else:
+			duration_minute = f"*/{str(args['duration_minute'])}"
+		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
+		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=[
+		                     'low', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=[
+		                     'high', interval.IP.ip], replace_existing=True)
+		return 'Successfuly Updated', 204
+
+	def delete(self, room_id, interval_id):
+		rooms = db.RoomModel.query.filter_by(id=room_id).first()
+		if not rooms:
+			abort(409, message="Room {} does not exist".format(room_id))
+		interval = db.ClimateIntervalModel.query.filter_by(
+			climate_interval_id=interval_id, room=rooms).first()
+		if not interval:
+			abort(409, message="Interval {} doesn't exist, cannot Delete.".format(interval_id))
+		if interval.name == "CO2":
+			add_ip = db.ClimateModel.query.filter_by(co2_relay_ip='False').first()
+			if add_ip:
+				add_ip.co2_relay_ip = interval.IP.ip
+				db.session.add(add_ip)
+				db.session.commit()
+		if interval.name == "Humidity":
+			add_ip = db.ClimateModel.query.filter_by(humidity_relay_ip='False').first()
+			if add_ip:
+				add_ip.humidity_relay_ip = interval.IP.ip
+				db.session.add(add_ip)
+				db.session.commit()
+		if interval.name == "Exhaust":
+			add_ip = db.ClimateModel.query.filter_by(exhaust_relay_ip='False').first()
+			if add_ip:
+				add_ip.exhaust_relay_ip = interval.IP.ip
+				db.session.add(add_ip)
+				db.session.commit()
+		if interval.IP.state:
+			check_ip_state(interval.IP)
+		db.session.delete(interval)
+		db.session.commit()
+
+		start_job = appscheduler.get_job(f'{interval_id}-interval-start')
+		if not start_job:
+			abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id))
+
+		end_job = appscheduler.get_job(f'{interval_id}-interval-end')
+		if not end_job:
+			abort(409, message="APSchedule Job {} doesn't exist, cannot Delete.".format(interval_id))
+
+		appscheduler.remove_job(f'{interval_id}-interval-start')
+		appscheduler.remove_job(f'{interval_id}-interval-end')
+
+		return 'SUCCESS', 204
