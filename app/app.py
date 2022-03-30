@@ -1183,8 +1183,8 @@ class Climate(Resource):
 		try:
 			# ws = create_connection(f"ws://10.42.0.1:8000/ws/socket-server/")
 			# ws = create_connection(f"ws://127.0.0.1:8000/ws/socket-server/")
-			# ws = create_connection(f"ws://192.168.1.32:8000/ws/socket-server/")
-			ws = create_connection(f"ws://192.168.1.37:8000/ws/socket-server/")
+			ws = create_connection(f"ws://192.168.1.42:8000/ws/socket-server/")
+			# ws = create_connection(f"ws://192.168.1.37:8000/ws/socket-server/")
 			ws.send(json.dumps({"data": args, "room_id": str(ips.room_id)}))
 			result = ws.recv()
 			print("Received '%s'" % result)
