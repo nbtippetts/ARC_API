@@ -18,6 +18,9 @@ import logging
 
 logging.basicConfig(filename='/tmp/log', level=logging.INFO,format='[%(asctime)s]: %(levelname)s : %(message)s')
 
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 app = Flask(__name__)
 api = Api(app)
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
