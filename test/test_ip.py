@@ -5,14 +5,11 @@ import requests
 payload = [{
 	'name': 'Light',
 	'IP': '192.168.0.133',
-}, {
-	'name': 'Climate',
-	'IP': '192.168.0.420',
 }]
 count=1
 for p in payload:
-	url = f"http://127.0.0.1:5000/ip"
-	# url = f"http://192.168.1.42:5000/ip"
+	# url = f"http://127.0.0.1:5000/ip"
+	url = f"http://192.168.1.42:5000/ip"
 
 	response = requests.get(url,params=p)
 	print(response.json())

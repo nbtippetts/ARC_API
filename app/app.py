@@ -16,7 +16,7 @@ from websocket import create_connection
 import os
 import logging
 
-logging.basicConfig(filename='/tmp/log', level=logging.DEBUG,format='[%(asctime)s]: %(levelname)s : %(message)s')
+logging.basicConfig(filename='/tmp/log', level=logging.INFO,format='[%(asctime)s]: %(levelname)s : %(message)s')
 
 app = Flask(__name__)
 api = Api(app)
