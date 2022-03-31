@@ -1217,7 +1217,6 @@ class Climate(Resource):
 			print("Received '%s'" % result)
 			ws.close()
 		except Exception as e:
-			print(e)
 			pass
 
 		climate = ClimateModel.query.filter_by(IP=ips).all()
@@ -1250,7 +1249,6 @@ class Climate(Resource):
 				else:
 					print('co2 do nothing')
 		except Exception as e:
-			print(e)
 			pass
 
 		try:
@@ -1266,7 +1264,6 @@ class Climate(Resource):
 				else:
 					print('temp do nothing')
 		except Exception as e:
-			print(e)
 			pass
 		try:
 			if climate.humidity_relay_ip == 'False':
@@ -1280,7 +1277,6 @@ class Climate(Resource):
 					print('humidity do nothing')
 
 		except Exception as e:
-			print(e)
 			pass
 
 		return 'SUCCESS', 200
@@ -1347,4 +1343,4 @@ api.add_resource(Climate, '/climate')
 api.add_resource(ClimateLog, '/climate/log')
 
 if __name__ == '__main__':
-	app.run(host='0.0.0.0')
+	app.run(host='0.0.0.0', debug=False)
