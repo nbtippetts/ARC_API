@@ -17,31 +17,31 @@ import os
 
 app = Flask(__name__)
 api = Api(app)
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-	os.getenv('DB_USER', 'flask'),
-	os.getenv('DB_PASSWORD', ''),
-	os.getenv('DB_HOST', 'mariadb'),
-	os.getenv('DB_NAME', 'flask')
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+# 	os.getenv('DB_USER', 'flask'),
+# 	os.getenv('DB_PASSWORD', ''),
+# 	os.getenv('DB_HOST', 'mariadb'),
+# 	os.getenv('DB_NAME', 'flask')
+# )
 db = SQLAlchemy(app)
 
 jobstores = {
-	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-		os.getenv('DB_USER', 'flask'),
-		os.getenv('DB_PASSWORD', ''),
-		os.getenv('DB_HOST', 'mariadb'),
-		os.getenv('DB_NAME', 'flask')
-	))
+	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
+	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+	# 	os.getenv('DB_USER', 'flask'),
+	# 	os.getenv('DB_PASSWORD', ''),
+	# 	os.getenv('DB_HOST', 'mariadb'),
+	# 	os.getenv('DB_NAME', 'flask')
+	# ))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
-	'processpool': ProcessPoolExecutor(5)
+	'processpool': ProcessPoolExecutor(10)
 }
 job_defaults = {
 	'coalesce': False,
-	'max_instances': 3
+	'max_instances': 5
 }
 
 tz = get_localzone()
@@ -494,6 +494,23 @@ class AddIP(Resource):
 			return ip, 201
 
 
+# resource_fields = {
+# 	'job_id': fields.Integer,
+# 	'job_triggers': fields.Integer,
+# 	'job_name': fields.String
+# }
+
+class APJobInfo(Resource):
+	# @marshal_with(resource_fields)
+	def get(self):
+		ap_job_list=[]
+		jobs = appscheduler.get_jobs()
+		print(jobs)
+		for job in jobs:
+			ap_job_list.append((job.id, job))
+
+		return ap_job_list, 200
+
 resource_fields = {
 	'climate_schedule_id': fields.Integer,
 	'room_id': fields.Integer,
@@ -615,8 +632,8 @@ class RelaySchedule(Resource):
 		end_hour = args['end_time'].strftime("%H")
 		end_minute = args['end_time'].strftime("%M")
 
-		start_triggers = CronTrigger(day_of_week=args['how_often'],hour=start_hour, minute=start_minute)
-		end_triggers = CronTrigger(day_of_week=args['how_often'],hour=end_hour, minute=end_minute)
+		start_triggers = CronTrigger(hour=start_hour, minute=start_minute)
+		end_triggers = CronTrigger(hour=end_hour, minute=end_minute)
 		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
 		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
 		return schedule, 201
@@ -648,10 +665,8 @@ class RelaySchedule(Resource):
 		end_hour = args['end_time'].strftime("%H")
 		end_minute = args['end_time'].strftime("%M")
 
-		start_triggers = CronTrigger(
-			day_of_week=args['how_often'], hour=start_hour, minute=start_minute)
-		end_triggers = CronTrigger(
-			day_of_week=args['how_often'], hour=end_hour, minute=end_minute)
+		start_triggers = CronTrigger(hour=start_hour, minute=start_minute)
+		end_triggers = CronTrigger(hour=end_hour, minute=end_minute)
 		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
 		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
 		return 'Successfuly Updated', 204
@@ -1295,6 +1310,8 @@ class RelayControl(Resource):
 			end_task('high', args["ip"])
 		return 'SUCCESS', 200
 
+
+api.add_resource(APJobInfo, '/ap_jobs')
 
 api.add_resource(Room, '/room/<int:room_id>')
 api.add_resource(RoomList, '/rooms')
