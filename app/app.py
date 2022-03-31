@@ -1,8 +1,8 @@
 from email.policy import default
-from flask import Flask, request, jsonify
+from flask import Flask, request, make_response
 from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 from flask_sqlalchemy import SQLAlchemy
-from tzlocal import get_localzone_name, get_localzone
+from tzlocal import get_localzone
 from datetime import datetime
 import requests
 import json
@@ -11,29 +11,32 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler import events
 from websocket import create_connection
 import os
+import logging
 
+logging.basicConfig(filename='/tmp/log', level=logging.DEBUG,format='[%(asctime)s]: %(levelname)s : %(message)s')
 
 app = Flask(__name__)
 api = Api(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
-# 	os.getenv('DB_USER', 'flask'),
-# 	os.getenv('DB_PASSWORD', ''),
-# 	os.getenv('DB_HOST', 'mariadb'),
-# 	os.getenv('DB_NAME', 'flask')
-# )
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+	os.getenv('DB_USER', 'flask'),
+	os.getenv('DB_PASSWORD', ''),
+	os.getenv('DB_HOST', 'mariadb'),
+	os.getenv('DB_NAME', 'flask')
+)
 db = SQLAlchemy(app)
 
 jobstores = {
-	'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format( urllib.parse.quote_plus("@Wicked2009")))
-	# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-	# 	os.getenv('DB_USER', 'flask'),
-	# 	os.getenv('DB_PASSWORD', ''),
-	# 	os.getenv('DB_HOST', 'mariadb'),
-	# 	os.getenv('DB_NAME', 'flask')
-	# ))
+	# 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
+	'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+		os.getenv('DB_USER', 'flask'),
+		os.getenv('DB_PASSWORD', ''),
+		os.getenv('DB_HOST', 'mariadb'),
+		os.getenv('DB_NAME', 'flask')
+	))
 }
 executors = {
 	'default': ThreadPoolExecutor(20),
@@ -44,6 +47,7 @@ job_defaults = {
 	'max_instances': 5
 }
 
+
 tz = get_localzone()
 print(tz)
 LOCAL_DT = datetime.now()
@@ -51,6 +55,14 @@ print(LOCAL_DT)
 LOCAL_DT = LOCAL_DT.replace(tzinfo=tz)
 print(LOCAL_DT)
 appscheduler = BackgroundScheduler(daemon=True, jobstores=jobstores, executors=executors, job_defaults=job_defaults, timezone=tz)
+def job_listener(event):
+	logging.info(event)
+
+
+appscheduler.add_listener(job_listener,
+							events.EVENT_JOB_EXECUTED |
+							events.EVENT_JOB_MISSED |
+							events.EVENT_JOB_ERROR)
 appscheduler.start()
 # appscheduler.shutdown()
 
@@ -75,9 +87,9 @@ class IPModel(db.Model):
 	ip = db.Column(db.String(20), default='False', nullable=False)
 	climate_schedule = db.relationship('ClimateScheduleModel', cascade='all, delete',backref='IP', lazy='joined')
 	climate_interval = db.relationship('ClimateIntervalModel', cascade='all, delete',backref='IP', lazy='joined')
-	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='IP', lazy='select', order_by='ClimateScheduleLogModel.end_time.desc()')
+	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='IP',lazy='select', order_by='ClimateScheduleLogModel.climate_schedule_log_id.desc()')
 	climate = db.relationship('ClimateModel',cascade='all, delete', backref='IP', lazy='joined')
-	climate_log = db.relationship('ClimateLogModel', backref='IP',lazy='select', order_by='ClimateLogModel.timestamp.desc()')
+	climate_log = db.relationship('ClimateLogModel', backref='IP',lazy='select', order_by='ClimateLogModel.climate_log_id.desc()')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
@@ -196,6 +208,7 @@ def is_time_between(begin_time, end_time):
 
 def start_task(*args):
 	print(args)
+	logging.info(args)
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	if ip_state.state == False:
 		logs = ClimateScheduleLogModel(name=ip_state.name, start_time=get_local_time(), end_time=get_local_time(), end_time_flag=True, IP=ip_state)
@@ -208,6 +221,7 @@ def start_task(*args):
 
 def end_task(*args):
 	print(args)
+	logging.info(args)
 	ip_state = IPModel.query.filter_by(ip=args[1]).first()
 	logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 	if logs.end_time_flag:
@@ -225,6 +239,7 @@ def end_task(*args):
 # 	print(args)
 # 	url = f'http://{args[1]}/?v={args[0]}'
 # 	res = requests.get(url,timeout=5)
+# 	logging.info(res)
 # 	if res.status_code == 200:
 # 		ip_state = IPModel.query.filter_by(ip=args[1]).first()
 # 		if ip_state.state == False:
@@ -493,13 +508,6 @@ class AddIP(Resource):
 			db.session.commit()
 			return ip, 201
 
-
-# resource_fields = {
-# 	'job_id': fields.Integer,
-# 	'job_triggers': fields.Integer,
-# 	'job_name': fields.String
-# }
-
 class APJobInfo(Resource):
 	# @marshal_with(resource_fields)
 	def get(self):
@@ -507,9 +515,9 @@ class APJobInfo(Resource):
 		jobs = appscheduler.get_jobs()
 		print(jobs)
 		for job in jobs:
-			ap_job_list.append((job.id, job))
+			ap_job_list.append((job.id, job.trigger))
 
-		return ap_job_list, 200
+		return make_response(str(ap_job_list), 200)
 
 resource_fields = {
 	'climate_schedule_id': fields.Integer,
