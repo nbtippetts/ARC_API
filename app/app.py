@@ -17,7 +17,7 @@ import os
 import logging
 
 logging.basicConfig(filename='/tmp/log', level=logging.INFO,format='[%(asctime)s]: %(levelname)s : %(message)s')
-
+logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
@@ -46,7 +46,7 @@ executors = {
 	'processpool': ProcessPoolExecutor(10)
 }
 job_defaults = {
-	'coalesce': False,
+	'coalesce': True,
 	'max_instances': 5
 }
 
