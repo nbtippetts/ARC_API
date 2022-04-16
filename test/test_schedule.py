@@ -7,13 +7,17 @@ start_added = timedelta(minutes = start_min)
 end_added = timedelta(minutes = minutes)
 start = starting + start_added
 end = starting + end_added
+start = start.strftime('%Y-%m-%d %H:%M')
+end = end.strftime('%Y-%m-%d %H:%M')
 print(start)
 print(end)
-url = "http://127.0.0.1:5000/room/1/relayschedule"
+
+url = "http://127.0.0.1:5000/room/2/relayschedule/2"
 # url = "http://127.0.0.1:5000/room/1/ip/1/relayschedule/1"
-# payload={'name': 'light','start_time': start, 'end_time': end, 'how_often': '*'}
-# response = requests.put(url, data=payload)
-# print(response.json())
+payload = {'name': 'Water', 'start_time': start, 'end_time': end, 'how_often': "*", 'ip_id': 3}
+
+response = requests.put(url, data=payload)
+print(response.json())
 
 # response = requests.get(url)
 # print(response.json())
