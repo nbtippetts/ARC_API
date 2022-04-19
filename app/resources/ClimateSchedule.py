@@ -16,12 +16,10 @@ resource_fields = {
 }
 # Define parser and request args
 parser = reqparse.RequestParser()
-parser.add_argument(
-	'name', type=str, help='What are you trying to create a schedule for?', required=False)
+parser.add_argument('name', type=str, help='What are you trying to create a schedule for?', required=False)
 parser.add_argument('start_time', type=str, help='Invalid Date', required=True)
 parser.add_argument('end_time', type=str, help='Invalid Date', required=True)
-parser.add_argument('how_often', type=str,
-                    help='Invalid Interval', required=True)
+parser.add_argument('how_often', type=str,help='Invalid Interval', required=True)
 parser.add_argument('ip_id', type=str, help='Invalid IP', required=False)
 
 
@@ -69,8 +67,8 @@ class RelaySchedule(Resource):
 	@marshal_with(resource_fields)
 	def put(self, room_id, schedule_id):
 		args = parser.parse_args()
-		args['start_time'] = datetime.strptime(args['start_time'], '%Y-%m-%d %H:%M')
-		args['end_time'] = datetime.strptime(args['end_time'], '%Y-%m-%d %H:%M')
+		args['start_time'] = datetime.strptime(args['start_time'], '%m/%d/%Y, %I:%M:%S %p')
+		args['end_time'] = datetime.strptime(args['end_time'], '%m/%d/%Y, %I:%M:%S %p')
 		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
@@ -160,8 +158,8 @@ class RelaySchedule(Resource):
 		if not schedule:
 			abort(409, message="Schedule {} doesn't exist, cannot update.".format(schedule_id))
 
-		args['start_time'] = datetime.strptime(args['start_time'], '%Y-%m-%d %H:%M')
-		args['end_time'] = datetime.strptime(args['end_time'], '%Y-%m-%d %H:%M')
+		args['start_time'] = datetime.strptime(args['start_time'], '%m/%d/%Y, %I:%M:%S %p')
+		args['end_time'] = datetime.strptime(args['end_time'], '%m/%d/%Y, %I:%M:%S %p')
 		# schedule.name = args['name']
 		schedule.start_time = args['start_time'].strftime("%I:%M %p")
 		schedule.end_time = args['end_time'].strftime("%I:%M %p")

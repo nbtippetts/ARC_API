@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import DeleteRoom from "./DeleteRoom";
 import AddIP from "./AddIP";
 import DeleteIP from "./DeleteIP";
-import { Form, Button, Card, ListGroup, Container, Row, Col} from 'react-bootstrap';
+import { Button, Card, ListGroup, Container, Row, Col} from 'react-bootstrap';
 
 const ProductComponent = () => {
 	const products = useSelector((state) => state.allProducts.products);

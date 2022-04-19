@@ -1,5 +1,6 @@
 from app.config import env_config
 from email.policy import default
+from flask_socketio import SocketIO
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
@@ -8,8 +9,6 @@ from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
 from tzlocal import get_localzone
 from datetime import datetime
-import requests
-import json
 import urllib.parse
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -28,6 +27,7 @@ api = Api()
 db = SQLAlchemy()
 migrate = Migrate()
 ma = Marshmallow()
+socketio = SocketIO()
 cors = CORS()
 jobstores = {
     'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
@@ -71,6 +71,8 @@ def create_app(config_name):
 	app = Flask(__name__)
 	app.config.from_object(env_config['development'])
 	app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+	app.config["REDIS_URL"] = "redis://localhost:6379"
+	app.config['SECRET_KEY'] = 'mysecret'
 	api.init_app(app)
 
 	db.init_app(app)
@@ -79,6 +81,7 @@ def create_app(config_name):
 		db.create_all()
 	migrate.init_app(app, db)
 	ma.init_app(app)
+	socketio.init_app(app, cors_allowed_origins="*")
 	cors.init_app(app)
 	appscheduler.start()
 	return app

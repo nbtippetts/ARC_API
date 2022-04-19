@@ -1,8 +1,8 @@
-import React, { Component, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React from "react";
+import { useDispatch } from "react-redux";
 import { removeSelectedProduct } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Form, Button, Card, ListGroup, Container, Row, Col} from 'react-bootstrap';
+import { Button} from 'react-bootstrap';
 
 
 const DeleteRoom = (props) => {

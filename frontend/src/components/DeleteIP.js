@@ -1,8 +1,8 @@
-import React, { Component, useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setIPProducts,setIP, removeSelectedProduct, removeSelectedIPProduct } from "../redux/actions/productsActions";
+import { setIP, removeSelectedProduct, removeSelectedIPProduct } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Form, Button,DropdownButton, Dropdown, Container, Row, Col} from 'react-bootstrap';
+import { Button} from 'react-bootstrap';
 
 
 
