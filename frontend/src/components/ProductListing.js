@@ -39,9 +39,7 @@ const ProductPage = () => {
   console.log("Products :", products);
   console.log("IPS :", ips);
   return (
-    <div className="ui grid container">
       <ProductComponent />
-    </div>
   );
 };
 

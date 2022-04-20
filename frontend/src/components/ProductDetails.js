@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Box,Stack, Card, CardActionArea, CardContent, Container,Typography,Grid} from '@mui/material';
 import {
 	selectedProduct,
-	removeSelectedProduct,
+	removeSelectedProduct
 } from "../redux/actions/productsActions";
 import AddSchedule from "./AddSchedule";
 import ScheduleTable from "./ScheduleTable";
@@ -22,32 +22,20 @@ const ProductDetails = () => {
 			});
 		dispatch(selectedProduct(response.data));
 	};
-		let onDeleteClick = async (id) => {
-			console.log(id)
-			const response = await axios
-				.delete("http://localhost:5000/room/"+id)
-				.catch((err) => {
-					console.log("Err: ", err);
-					});
-					console.log(response);
-					if (response.status === 201) {
-						dispatch(removeSelectedProduct(id));
-					}
-		}
 
 	useEffect(() => {
-		if (productId && productId !== "") fetchProductDetail(productId);
+		if (productId && productId !== "")
+		fetchProductDetail(productId);
 		return () => {
 			dispatch(removeSelectedProduct());
 		};
 	}, [productId]);
 
 	return (
-		<div className="ui grid container">
+		<Container maxWidth="lg">
 			{Object.keys(product).length === 0 ? (
 				<div>...Loading</div>
 			) : (
-				<Container maxWidth="lg">
 					<Stack spacing={2}>
 				<Grid container spacing={{ xs: 2, md: 3 }} columns={{ xs: 4, sm: 8, md: 12 }}>
 				{product.ip.map((ip,ipIndex) => (
@@ -79,13 +67,12 @@ const ProductDetails = () => {
 				))}
 			</Grid>
 			<Box>
-				<ScheduleTable />
 				<AddSchedule roomId={productId}/>
+				<ScheduleTable />
 			</Box>
 			</Stack>
-			</Container>
 			)}
-		</div>
+			</Container>
 	);
 };
 

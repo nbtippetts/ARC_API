@@ -5,6 +5,6 @@ const reducers = combineReducers({
   product: selectedProductsReducer,
   addProduct: addProductReducer,
   allIPS: ipsReducer,
-  ip: selectedIPSReducer,
+  ip: selectedIPSReducer
 });
 export default reducers;

@@ -26,6 +26,18 @@ export const selectedProduct = (product) => {
     payload: product,
   };
 };
+export const setSchedules = (product) => {
+  return {
+    type: ActionTypes.SET_SCHEDULE,
+    payload: product,
+  };
+};
+export const removeSchedule = (index) => {
+  return {
+    type: ActionTypes.REMOVE_SELECTED_SCHEDULE,
+    payload: index,
+  };
+};
 export const removeSelectedProduct = (index) => {
   return {
     type: ActionTypes.REMOVE_SELECTED_PRODUCT,

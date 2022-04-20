@@ -2,6 +2,12 @@ import { Action } from "history";
 import { ActionTypes } from "../constants/action-types";
 const intialState = {
   products: [],
+  product: {
+    climate: [],
+    climate_schedule:[],
+    climate_interval:[],
+    IP:[]
+  },
   ips: [],
 };
 
@@ -40,7 +46,11 @@ export const selectedProductsReducer = (state = {}, { type, payload }) => {
   console.log(type);
   switch (type) {
     case ActionTypes.SELECTED_PRODUCT:
-      return { ...state, ...payload };
+      return { ...state,...payload}
+    case ActionTypes.SET_SCHEDULE:
+      return { ...state, payload };
+    case ActionTypes.REMOVE_SELECTED_SCHEDULE:
+      return { ...state, payload };
     default:
       return state;
   }

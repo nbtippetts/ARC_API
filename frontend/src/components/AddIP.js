@@ -10,7 +10,6 @@ const AddIP = (props) => {
 	const [roomId, setRoomId] = useState("");
 	const [roomIndexId, setRoomIndexId] = useState("");
 	const products = useSelector((state) => state.allProducts.products);
-	const ips = useSelector((state) => state.allIPS.ips);
 	const id = props.ipId;
 	const ipIndexId = props.indexId;
 	const dispatch = useDispatch();

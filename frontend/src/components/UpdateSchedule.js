@@ -15,20 +15,23 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { setSchedules } from "../redux/actions/productsActions";
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
 
-const AddSchedule = (props) => {
+const UpdateSchedule = (props) => {
 	let product = useSelector((state) => state.product);
+	console.log(props)
+	const row = props.row;
+	console.log(row.IP[0].id)
 	const roomId = props.roomId;
-	const [open, setOpen] = React.useState(false);
-	const [start, setStart] = React.useState(new Date());
-	const [end, setEnd] = React.useState(new Date());
-	const [name, setName] = React.useState("");
-	const [ipId, setIpId] = useState("");
+	const scheduleId = props.scheduleId;
+	const index = props.index;
+	const [open, setOpen] = useState(false);
+	const [start, setStart] = useState(new Date());
+	const [end, setEnd] = useState(new Date());
+	const [name, setName] = useState(row.IP[0].name);
 	const dispatch = useDispatch();
 
-	const handleChangeName = (newValue) => {
-		setName(newValue);
-	};
 	const handleChangeStart = (newValue) => {
 		setStart(newValue);
 	};
@@ -44,27 +47,23 @@ const AddSchedule = (props) => {
     setOpen(false);
   };
 
-  	let handleSchedule = async (e) => {
+  	let handleUpdateSchedule = async (e) => {
 		e.preventDefault();
-		if(product.climate_schedule.length === 0){
-			var scheduleId=1
-		} else {
-			var scheduleId=product.climate_schedule.length+1
-		}
 		const payload = {
 			name: name,
 			start_time: start.toLocaleString() + '',
 			end_time: end.toLocaleString() + '',
 			how_often: '*',
-			ip_id: ipId
+			ip_id: row.IP[0].id
 		}
 		const response = await axios
-		.put("/room/"+roomId+"/relayschedule/"+scheduleId,payload)
+		.patch("/room/"+roomId+"/relayschedule/"+scheduleId,payload)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});
 		console.log(response);
 		if (response.status === 201) {
+			product.climate_schedule.splice(index,1)
 			product.climate_schedule.push(response.data)
 			console.log(product)
 			dispatch(setSchedules(product))
@@ -74,22 +73,21 @@ const AddSchedule = (props) => {
 
 
 	const handleIpSelect=(e)=>{
-		setIpId(e.target.value[0]);
 		setName(e.target.value[1])
   	}
 
   return (
     <div>
-      <Button variant="outlined" onClick={handleClickOpen}>
-        Open form dialog
-      </Button>
+      <IconButton onClick={handleClickOpen}>
+        <EditIcon/>
+      </IconButton>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Schedule</DialogTitle>
-		<form onSubmit={handleSchedule}>
+        <DialogTitle>Update Schedule</DialogTitle>
+		<form onSubmit={handleUpdateSchedule}>
         <DialogContent>
 		  <Stack spacing={3}>
           <DialogContentText>
-            Create Your Schedule
+            Update {name}
           </DialogContentText>
 		<LocalizationProvider dateAdapter={AdapterDateFns}>
 				<TimePicker
@@ -106,21 +104,11 @@ const AddSchedule = (props) => {
 				/>
 
 			</LocalizationProvider>
-			<Select
-				title="Relay"
-				id="dropdown-menu-align-right"
-				label="Add To Relay"
-				onChange={handleIpSelect}
-				renderInput={(params) => <TextField {...params} />}>
-					{product.ip.map((ip) => (
-						<MenuItem value={[ip.id,ip.name]}>{ip.name}</MenuItem>
-					))}
-				</Select>
 			</Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit">ADD</Button>
+          <Button type="submit">Update</Button>
         </DialogActions>
 		</form>
       </Dialog>
@@ -129,4 +117,4 @@ const AddSchedule = (props) => {
 
 };
 
-export default AddSchedule;
+export default UpdateSchedule;
