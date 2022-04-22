@@ -170,7 +170,11 @@ class ClimateParameters(Resource):
 		)
 		db.session.add(climate)
 		db.session.commit()
-		if args['climate_start_time'] != '':
+		if args['climate_start_time'] is not None:
+			args['climate_start_time'] = datetime.strptime(
+				args['climate_start_time'], '%m/%d/%Y, %I:%M:%S %p').time()
+			args['climate_end_time'] = datetime.strptime(
+				args['climate_end_time'], '%m/%d/%Y, %I:%M:%S %p').time()
 			climate_day_night = ClimateDayNightModel(
 				climate_start_time=args['climate_start_time'],
 				climate_end_time=args['climate_end_time'],
@@ -178,7 +182,7 @@ class ClimateParameters(Resource):
 			)
 			db.session.add(climate_day_night)
 			db.session.commit()
-		return results, 201
+		return climate, 201
 
 	@marshal_with(resource_fields)
 	def patch(self, room_id, climate_parameter_id):
@@ -255,12 +259,16 @@ class ClimateParameters(Resource):
 		climate_day_night = ClimateDayNightModel.query.filter_by(
 			climate=climate).first()
 		if climate_day_night:
+			args['climate_start_time'] = datetime.strptime(
+				args['climate_start_time'], '%m/%d/%Y, %I:%M:%S %p').time()
+			args['climate_end_time'] = datetime.strptime(
+				args['climate_end_time'], '%m/%d/%Y, %I:%M:%S %p').time()
 			climate_day_night.climate_start_time = args['climate_start_time'],
 			climate_day_night.climate_end_time = args['climate_end_time'],
 			db.session.add(climate_day_night)
 			db.session.commit()
 
-		return climate, 204
+		return climate, 201
 
 	def delete(self, room_id, climate_parameter_id):
 		rooms = RoomModel.query.filter_by(id=room_id).first()
@@ -393,7 +401,7 @@ class ClimateLog(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
-		ips = IPModel.query.filter_by(ip='192.168.0.420').first()
+		ips = IPModel.query.filter_by(ip='192.168.0.16').first()
 		# print(request.remote_addr)
 		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:

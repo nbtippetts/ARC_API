@@ -5,7 +5,12 @@ from apscheduler.triggers.cron import CronTrigger
 import logging
 from .utils import start_task, end_task, get_local_time, is_time_between, check_ip_state
 
-
+ip_marshaller = {
+	'id': fields.Integer,
+	"name": fields.String,
+	"state": fields.Boolean,
+	"ip": fields.String
+}
 resource_fields = {
 	'climate_interval_id': fields.Integer,
 	'room_id': fields.Integer,
@@ -14,7 +19,7 @@ resource_fields = {
 	'interval_minute': fields.Integer,
 	'duration_hour': fields.Integer,
 	'duration_minute': fields.Integer,
-	'ip_id': fields.Integer,
+	"IP": fields.List(fields.Nested(ip_marshaller))
 }
 # Define parser and request args
 interval_parser = reqparse.RequestParser()
@@ -205,7 +210,7 @@ class RelayInterval(Resource):
                     'low', interval.IP.ip], replace_existing=True)
 		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=[
                     'high', interval.IP.ip], replace_existing=True)
-		return 'Successfuly Updated', 204
+		return interval, 201
 
 	def delete(self, room_id, interval_id):
 		rooms = RoomModel.query.filter_by(id=room_id).first()

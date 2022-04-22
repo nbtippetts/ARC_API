@@ -11,29 +11,31 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { setSchedules } from "../redux/actions/productsActions";
+import DurationPicker from 'react-duration-picker'
+import { setIntervals } from "../redux/actions/productsActions";
 
-const AddSchedule = (props) => {
+
+const AddInterval = (props) => {
 	let product = useSelector((state) => state.product);
 	const roomId = props.roomId;
 	const [open, setOpen] = useState(false);
-	const [start, setStart] = useState(new Date());
-	const [end, setEnd] = useState(new Date());
+	const [duration, setDuration] = useState({
+		hours: 1,
+		minutes: 0,
+	});
+	const [howOften, setHowOften] = useState({
+		hours: 1,
+		minutes: 0,
+	});
 	const [name, setName] = useState("");
 	const [ipId, setIpId] = useState("");
 	const dispatch = useDispatch();
 
-	const handleChangeName = (newValue) => {
-		setName(newValue);
+	const onDuration = duration => {
+		setDuration(duration);
 	};
-	const handleChangeStart = (newValue) => {
-		setStart(newValue);
-	};
-	const handleChangeEnd = (newValue) => {
-		setEnd(newValue);
+	const onHowOften = howOften => {
+		setHowOften(howOften);
 	};
 
   const handleClickOpen = () => {
@@ -44,30 +46,31 @@ const AddSchedule = (props) => {
     setOpen(false);
   };
 
-  	let handleSchedule = async (e) => {
+  	let handleInterval = async (e) => {
 		e.preventDefault();
-		if(product.climate_schedule.length === 0){
-			var scheduleId=1
+		if(product.climate_interval.length === 0){
+			var intervalId=1
 		} else {
-			var scheduleId=product.climate_schedule.length+1
+			var intervalId=product.climate_interval.length+1
 		}
 		const payload = {
 			name: name,
-			start_time: start.toLocaleString() + '',
-			end_time: end.toLocaleString() + '',
-			how_often: '*',
+			duration_hour: duration.hours,
+			duration_minute: duration.minutes,
+			interval_hour:howOften.hours,
+			interval_minute:howOften.minutes,
 			ip_id: ipId
 		}
 		const response = await axios
-		.put("/room/"+roomId+"/relayschedule/"+scheduleId,payload)
+		.put("/room/"+roomId+"/relayinterval/"+intervalId,payload)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});
 		console.log(response);
 		if (response.status === 201) {
-			product.climate_schedule.push(response.data)
+			product.climate_interval.push(response.data)
 			console.log(product)
-			dispatch(setSchedules(product))
+			dispatch(setIntervals(product))
 		}
 		setOpen(false);
 	};
@@ -84,28 +87,18 @@ const AddSchedule = (props) => {
         Open form dialog
       </Button>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Schedule</DialogTitle>
-		<form onSubmit={handleSchedule}>
+        <DialogTitle>Interval Schedule</DialogTitle>
+		<form onSubmit={handleInterval}>
         <DialogContent>
 		  <Stack spacing={3}>
           <DialogContentText>
-            Create Your Schedule
+            Duration
           </DialogContentText>
-		<LocalizationProvider dateAdapter={AdapterDateFns}>
-				<TimePicker
-				label="Start Time"
-				value={start}
-				onChange={handleChangeStart}
-				renderInput={(params) => <TextField {...params} />}
-				/>
-				<TimePicker
-				label="End Time"
-				value={end}
-				onChange={handleChangeEnd}
-				renderInput={(params) => <TextField {...params} />}
-				/>
-
-			</LocalizationProvider>
+		  <DurationPicker initialDuration={{ hours: 0, minutes: 0, seconds: 0 }} onChange={onDuration}maxHours={12} />
+          <DialogContentText>
+            How Often
+          </DialogContentText>
+		  <DurationPicker initialDuration={{ hours: 0, minutes: 0, seconds: 0 }} onChange={onHowOften} maxHours={12} />
 			<Select
 				title="Relay"
 				id="dropdown-menu-align-right"
@@ -129,4 +122,4 @@ const AddSchedule = (props) => {
 
 };
 
-export default AddSchedule;
+export default AddInterval;

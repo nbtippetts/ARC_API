@@ -38,6 +38,31 @@ export const removeSchedule = (index) => {
     payload: index,
   };
 };
+
+export const setIntervals = (product) => {
+  return {
+    type: ActionTypes.SET_INTERVAL,
+    payload: product,
+  };
+};
+export const removeInterval = (index) => {
+  return {
+    type: ActionTypes.REMOVE_SELECTED_INTERVAL,
+    payload: index,
+  };
+};
+export const setClimates = (product) => {
+  return {
+    type: ActionTypes.SET_CLIMATE,
+    payload: product,
+  };
+};
+export const removeClimate = (index) => {
+  return {
+    type: ActionTypes.REMOVE_SELECTED_CLIMATE,
+    payload: index,
+  };
+};
 export const removeSelectedProduct = (index) => {
   return {
     type: ActionTypes.REMOVE_SELECTED_PRODUCT,

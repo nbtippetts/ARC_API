@@ -51,6 +51,14 @@ export const selectedProductsReducer = (state = {}, { type, payload }) => {
       return { ...state, payload };
     case ActionTypes.REMOVE_SELECTED_SCHEDULE:
       return { ...state, payload };
+    case ActionTypes.SET_INTERVAL:
+      return { ...state, payload };
+    case ActionTypes.REMOVE_SELECTED_INTERVAL:
+      return { ...state, payload };
+    case ActionTypes.SET_CLIMATE:
+      return { ...state, payload };
+    case ActionTypes.REMOVE_SELECTED_CLIMATE:
+      return { ...state, payload };
     default:
       return state;
   }

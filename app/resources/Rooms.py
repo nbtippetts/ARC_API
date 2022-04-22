@@ -77,16 +77,6 @@ class Room(Resource):
 	@marshal_with(resource_fields)
 	def get(self, room_id):
 		results = RoomModel.query.filter_by(id=room_id).first()
-		if results.climate:
-			for climate in results.climate:
-				if climate.climate_day_night:
-					for climate_time in climate.climate_day_night:
-						climate_time.climate_start_time = climate_time.climate_start_time.strftime(
-							"%I:%M %p")
-						climate_time.climate_end_time = climate_time.climate_end_time.strftime(
-							"%I:%M %p")
-						print(climate_time)
-
 		return results, 200
 
 	@marshal_with(resource_fields)
@@ -181,9 +171,8 @@ class IPLogs(Resource):
 			abort(409, message="Room {} does not exist".format(room_id))
 
 		# ip_logs = IPModel.query.filter_by(room=rooms).all()
-		climate_log = [p.climate_log[:5]
-                 for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
-		climate_schedule_log = [p.climate_schedule_log[:5] for p in IPModel.query.filter_by(
+		climate_log = [p.climate_log[:20]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
+		climate_schedule_log = [p.climate_schedule_log[:20] for p in IPModel.query.filter_by(
 			room=rooms).all() if p.climate_schedule_log]
 
 		return {'climate_log': climate_log, 'climate_schedule_log': climate_schedule_log}, 200
@@ -297,6 +286,6 @@ api.add_resource(RoomList, '/rooms')
 
 api.add_resource(AddIP, '/ip')
 api.add_resource(RoomIP, '/room/<int:room_id>/ip/<int:ip_id>')
-api.add_resource(IPLogs, '/room/<int:room_id>/ips')
+api.add_resource(IPLogs, '/room/<int:room_id>/ip_logs')
 api.add_resource(IPChartLogs, '/room/<int:room_id>/ip_chart_logs')
 api.add_resource(IPList, '/all_ips')
