@@ -2,7 +2,8 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { removeSelectedProduct } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Button} from 'react-bootstrap';
+import Button from '@mui/material/Button';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 
 
 const DeleteRoom = (props) => {
@@ -24,7 +25,7 @@ const DeleteRoom = (props) => {
 		}
 
 		return (
-			<Button variant="danger" key={id} onClick={()=>onDeleteClick(id)}>Delete</Button>
+			<Button variant="outlined" startIcon={<DeleteOutlined />} key={id} onClick={()=>onDeleteClick(id)}>Delete</Button>
 		);
 };
 

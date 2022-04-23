@@ -2,11 +2,14 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIPProducts, removeSelectedIP } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Form, Button,DropdownButton, Dropdown, Container, Row, Col} from 'react-bootstrap';
-
+import { Form} from 'react-bootstrap';
+import Stack from '@mui/material/Stack';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
 
 
 const AddIP = (props) => {
+	const [focusItemId, setFocusItemId] = useState(-1);
 	const [roomId, setRoomId] = useState("");
 	const [roomIndexId, setRoomIndexId] = useState("");
 	const products = useSelector((state) => state.allProducts.products);
@@ -33,30 +36,20 @@ const AddIP = (props) => {
 			dispatch(setIPProducts(products));
 		}
 	};
-	const handleSelect=(e)=>{
-		console.log(e)
-		const indexArr = e.split(",");
-		setRoomId(indexArr[0]);
-		setRoomIndexId(indexArr[1]);
+	const handleSelect=(key,value)=>{
+		setRoomIndexId(key);
+		setRoomId(value);
+		setFocusItemId(focusItemId === key ? -1 : key);
   	}
 	return(
-	<Container>
-		<Row>
 			<Form onSubmit={handleSubmit}>
-				<Form.Group className="mb-3" controlId="formGroupEmail">
-					<DropdownButton
-						title="Add To Room"
-						id="dropdown-menu-align-right"
-						onSelect={handleSelect}>
-							{products.map((product,index) => (
-								<Dropdown.Item eventKey={[product.id,index]}>{product.name}</Dropdown.Item>
-							))}
-					</DropdownButton>
-				</Form.Group>
+				<Stack direction="row" spacing={2}>
+					{products.map((product,index) => (
+						<MenuItem selected={focusItemId === index} onClick={() => handleSelect(index,product.id)} value={product.name}>{product.name}</MenuItem>
+					))}
 				<Button variant="primary" type="submit">ADD</Button>
+				</Stack>
 			</Form>
-		</Row>
-	</Container>
 	);
 };
 

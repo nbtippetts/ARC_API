@@ -2,7 +2,8 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIP, removeSelectedProduct, removeSelectedIPProduct } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Button} from 'react-bootstrap';
+import IconButton from '@mui/material/IconButton';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 
 
 
@@ -41,7 +42,7 @@ const DeleteIP = (props) => {
 	};
 
 	return(
-	<Button variant="danger" key={id} onClick={()=>onDeleteClick(id)}>Remove IP</Button>
+	<IconButton variant="danger" key={id} onClick={()=>onDeleteClick(id)}><DeleteOutlined/></IconButton>
 	);
 };
 

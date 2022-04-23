@@ -76,15 +76,15 @@ const AddInterval = (props) => {
 	};
 
 
-	const handleIpSelect=(e)=>{
-		setIpId(e.target.value[0]);
-		setName(e.target.value[1])
+	const handleIpSelect=(key,value)=>{
+		setIpId(key);
+		setName(value)
   	}
 
   return (
     <div>
       <Button variant="outlined" onClick={handleClickOpen}>
-        Open form dialog
+        Create Interval
       </Button>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Interval Schedule</DialogTitle>
@@ -99,14 +99,12 @@ const AddInterval = (props) => {
             How Often
           </DialogContentText>
 		  <DurationPicker initialDuration={{ hours: 0, minutes: 0, seconds: 0 }} onChange={onHowOften} maxHours={12} />
-			<Select
+		<Select
 				title="Relay"
 				id="dropdown-menu-align-right"
-				label="Add To Relay"
-				onChange={handleIpSelect}
-				renderInput={(params) => <TextField {...params} />}>
+				label="Add To Relay">
 					{product.ip.map((ip) => (
-						<MenuItem value={[ip.id,ip.name]}>{ip.name}</MenuItem>
+						<MenuItem onClick={() => handleIpSelect(ip.id,ip.name)} value={ip.name}>{ip.name}</MenuItem>
 					))}
 				</Select>
 			</Stack>

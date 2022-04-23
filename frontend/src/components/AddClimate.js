@@ -104,7 +104,7 @@ const AddClimate = (props) => {
   return (
     <div>
       <Button variant="outlined" onClick={handleClickOpen}>
-        Open form dialog
+        Create Climate
       </Button>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Climate</DialogTitle>

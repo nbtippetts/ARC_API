@@ -42,11 +42,6 @@ const ProductDetails = () => {
 			.catch((err) => {
 				console.log("Err: ", err);
 			});
-		response.data.ip.map((ips,index) =>{
-			if(ips.name === "Climate"){
-				response.data.ip.splice(index,1)
-			}
-		})
 		dispatch(selectedProduct(response.data));
 	};
 	const fetchClimateLogs = async (id) => {
@@ -74,10 +69,10 @@ const ProductDetails = () => {
 				<div>...Loading</div>
 			) : (
 				<Stack spacing={2}>
-				<Grid container spacing={{ xs: 2, md: 4, lg: 6 }} columns={{ xs: 4, sm: 8, md: 12 }}>
+				<Grid container spacing={2}>
 				{product.ip.map((ip,ipIndex) => (
-				<Grid item xs={12} sm={6} md={3} key={ipIndex}>
-					<Card sx={{ maxWidth: 345 }}>
+				<Grid item xs={12} sm={6} md={4}>
+					<Card elevation={3} sx={{ maxWidth: 345 }}>
 						<CardActionArea>
 						<CardContent className={classes.overviewcard}>
 							<Typography
@@ -111,15 +106,19 @@ const ProductDetails = () => {
 					</Card>
 					</Grid>
 				))}
+
+				<Grid item xs={12} sm={12} md={12}>
+					<Stack spacing={2}>
+					<AddSchedule roomId={productId}/>
+					<ScheduleTable />
+					<AddInterval roomId={productId}/>
+					<IntervalTable />
+					<AddClimate roomId={productId} roomIps={product.ip}/>
+					<ClimateTable />
+					</Stack>
+				</Grid>
 			</Grid>
-			<Box>
-				<AddSchedule roomId={productId}/>
-				<ScheduleTable />
-				<AddInterval roomId={productId}/>
-				<IntervalTable />
-				<AddClimate roomId={productId} roomIps={product.ip}/>
-				<ClimateTable />
-			</Box>
+
 			</Stack>
 			)}
 			</Container>
