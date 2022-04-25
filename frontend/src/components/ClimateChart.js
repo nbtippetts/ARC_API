@@ -6,7 +6,7 @@ import { DataGrid } from '@mui/x-data-grid'
 import { Grid} from '@mui/material';
 import { useSelector } from "react-redux";
 export const ClimateChart = (props) => {
-	const productId = props.productId
+	const roomId = props.roomId
 	const roomIps = props.roomIps
 	const logs = useSelector((state) => state.allLogs.logs);
 	const columns = [
@@ -46,7 +46,7 @@ export const ClimateChart = (props) => {
 				</ResponsiveContainer>
 				</Grid>
 				<Grid item xs={12}>
-					<AddClimate roomId={productId} roomIps={roomIps}/>
+					<AddClimate roomId={roomId} roomIps={roomIps}/>
 					<ClimateTable />
 				</Grid>
 			</Grid>
