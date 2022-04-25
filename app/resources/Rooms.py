@@ -171,10 +171,11 @@ class IPLogs(Resource):
 			abort(409, message="Room {} does not exist".format(room_id))
 
 		# ip_logs = IPModel.query.filter_by(room=rooms).all()
-		climate_log = [p.climate_log[:20]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
+		climate_log = [p.climate_log[:75]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
 		climate_schedule_log = [p.climate_schedule_log[:20] for p in IPModel.query.filter_by(
 			room=rooms).all() if p.climate_schedule_log]
-
+		for log in climate_log[0]:
+			log.timestamp = log.timestamp.strftime('%d %b, %I:%M %p')
 		return {'climate_log': climate_log, 'climate_schedule_log': climate_schedule_log}, 200
 
 
@@ -184,31 +185,17 @@ log_chart_parser.add_argument(
 
 
 class IPChartLogs(Resource):
-	@marshal_with(chart_logs_resource_fields)
+	@marshal_with(logs_resource_fields)
 	def get(self, room_id):
-		args = log_chart_parser.parse_args()
 		rooms = RoomModel.query.filter_by(id=room_id).first()
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
-		if args['datetimes']:
-			datetimes = args['datetimes'].split(' - ')
-			start = datetime.strptime(datetimes[0], "%Y/%m/%d %I:%M %p")
-			end = datetime.strptime(datetimes[1], "%Y/%m/%d %I:%M %p")
-			print(start)
-			print(end)
-			ip = IPModel.query.filter_by(name='Climate', room=rooms).first()
-			climate_log = ClimateLogModel.query.filter_by(IP=ip).filter(
-				ClimateLogModel.timestamp.between(start, end)).all()
-			for log in climate_log:
-				log.timestamp = log.timestamp.strftime("%Y/%m/%d %I:%M %p")
-			return {'climate_log': climate_log}, 200
-		else:
-			climate_log = [p.climate_log for p in IPModel.query.filter_by(
-				room=rooms).all() if p.climate_log]
-			for log in climate_log:
-				for l in log:
-					l.timestamp = l.timestamp.strftime("%Y/%m/%d %I:%M %p")
-			return {'climate_log': climate_log}, 200
+
+		climate_log = [p.climate_log[:75]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
+		for log in climate_log[0]:
+			log.timestamp = log.timestamp.strftime('%d %b, %I:%M %p')
+			print(log)
+		return {'climate_log': climate_log}, 200
 
 
 class RoomIP(Resource):

@@ -71,8 +71,6 @@ def create_app(config_name):
 	app = Flask(__name__)
 	app.config.from_object(env_config['development'])
 	app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
-	app.config["REDIS_URL"] = "redis://localhost:6379"
-	app.config['SECRET_KEY'] = 'mysecret'
 	api.init_app(app)
 
 	db.init_app(app)

@@ -7,3 +7,9 @@ export const setLogs = (logs) => {
     payload: logs,
   };
 };
+export const setChartLogs = (logs) => {
+  return {
+    type: ActionTypes.SET_CHART_LOGS,
+    payload: logs,
+  };
+};

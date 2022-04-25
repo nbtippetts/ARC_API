@@ -9,10 +9,15 @@ import Paper from '@mui/material/Paper';
 import { useSelector } from "react-redux";
 import DeleteClimate from './DeleteClimate';
 import UpdateClimate from './UpdateClimate';
+import moment from 'moment';
 
 
 export default function ClimateTable() {
 	let product = useSelector((state) => state.product);
+	const handleDate=(value)=>{
+		var climateDate = moment(value,'HH:mm:ss').format('hh:mm a');
+		return climateDate
+  	}
 	return (
 		<TableContainer component={Paper}>
 		<Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -46,11 +51,11 @@ export default function ClimateTable() {
 				<TableCell align="right">{row.buffer_parameters}</TableCell>
 
 					<TableCell align="right">{row.climate_day_night.map((climateTime) => (
-						climateTime.climate_start_time
+						handleDate(climateTime.climate_start_time)
 						))}
 					</TableCell>
 					<TableCell align="right">{row.climate_day_night.map((climateTime) => (
-						climateTime.climate_end_time
+						handleDate(climateTime.climate_end_time)
 						))}
 					</TableCell>
 

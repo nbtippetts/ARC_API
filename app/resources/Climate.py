@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-from flask import request, Response
 from app.app import db, appscheduler, api, socketio
 from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
@@ -288,46 +287,12 @@ climate_parser = reqparse.RequestParser()
 climate_parser.add_argument('co2', type=int, help='Invalid CO2')
 climate_parser.add_argument('humidity', type=float, help='Invalid Humidity')
 climate_parser.add_argument('temperature', type=float, help='Invalid Temperature')
-@socketio.on('connect')
+@socketio.on('message')
 class Climate(Resource):
-	def on_connect():
-		print('user connected')
-		socketio.retrieve_active_users()
-
-
-	def retrieve_active_users():
-		socketio.emit('retrieve_active_users', broadcast=True)
-
-
-	@socketio.on('activate_user')
-	def on_active_user(data):
-		user = data.get('username')
-		socketio.emit('user_activated', {'user': user}, broadcast=True)
-
-
-	@socketio.on('deactivate_user')
-	def on_inactive_user(data):
-		user = data.get('username')
-		socketio.emit('user_deactivated', {'user': user}, broadcast=True)
-
-
-	def on_join(data):
-		room = data['room']
-		socketio.join_room(room)
-		socketio.emit('open_room', {'room': room}, broadcast=True)
-
-
-	@socketio.on('send_message')
-	def on_chat_sent(data):
-		room = data['room']
-		socketio.emit('message_sent', data, room=room)
-
-	@socketio.on('message')
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
-		print('someone connected to websocket!')
-		socketio.send('message', json.dumps(args), broadcast=True)
+		socketio.emit('message', json.dumps(args), broadcast=True)
 
 
 		# ips = IPModel.query.filter_by(ip='192.168.0.133').first()
@@ -395,7 +360,7 @@ class Climate(Resource):
 		# except Exception as e:
 		# 	pass
 
-		return 'SUCCESS', 201
+		return json.dumps(args), 201
 
 class ClimateLog(Resource):
 	def get(self):

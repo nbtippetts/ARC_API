@@ -2,22 +2,29 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Box,Stack, Card, CardActionArea, CardContent, Container,Typography,Grid} from '@mui/material';
+import { Stack, Card, CardHeader, CardActionArea, CardContent, Container,Typography,Grid} from '@mui/material';
+import ThermostatIcon from '@mui/icons-material/Thermostat';
+import OpacityIcon from '@mui/icons-material/Opacity';
+import ShowerIcon from '@mui/icons-material/Shower';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import Co2Icon from '@mui/icons-material/Co2';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+import CloudIcon from '@mui/icons-material/Cloud';
 import {
 	selectedProduct,
 	removeSelectedProduct
 } from "../redux/actions/productsActions";
-import { setLogs } from '../redux/actions/climateLogActions';
+import { setLogs, setChartLogs } from '../redux/actions/climateLogActions';
 import AddInterval from "./AddInterval";
 import AddSchedule from "./AddSchedule";
 import IntervalTable from "./IntervalTable";
 import ScheduleTable from "./ScheduleTable";
+import { ClimateChart } from "./ClimateChart";
 import { Co2Chart } from "./Co2Chart";
 import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
 import { makeStyles } from "@mui/styles";
-import AddClimate from "./AddClimate";
-import ClimateTable from "./ClimateTable";
+import { ClimateData } from "./ClimateData";
 const useStyles = makeStyles(theme => ({
   appBar: {
     top: "auto",
@@ -33,7 +40,7 @@ const useStyles = makeStyles(theme => ({
 const ProductDetails = () => {
 	const { productId } = useParams();
 	let product = useSelector((state) => state.product);
-	const logs = useSelector((state) => state.allLogs.logs);
+	// const logs = useSelector((state) => state.allLogs.logs);
 	const dispatch = useDispatch();
 	const classes = useStyles();
 	const fetchProductDetail = async (id) => {
@@ -51,7 +58,9 @@ const ProductDetails = () => {
 			console.log("Err: ", err);
 		});
 		if (response.status === 200) {
-			dispatch(setLogs(response.data.climate_log));
+			const displayLogs = response.data.climate_log[0].slice(0,20)
+			dispatch(setChartLogs(displayLogs));
+			dispatch(setLogs(response.data.climate_log[0].reverse()));
 		}
 	}
 	useEffect(() => {
@@ -64,7 +73,7 @@ const ProductDetails = () => {
 	}, [productId]);
 
 	return (
-		<Container maxWidth="lg">
+		<Container maxWidth={false}>
 			{Object.keys(product).length === 0 ? (
 				<div>...Loading</div>
 			) : (
@@ -74,24 +83,25 @@ const ProductDetails = () => {
 				<Grid item xs={12} sm={6} md={4}>
 					<Card elevation={3} sx={{ maxWidth: 345 }}>
 						<CardActionArea>
+							<CardHeader
+							title={ip.name}
+							subheader={
+								ip.name === "Climate" ? <CloudIcon/> :
+								ip.name === "Temperature" ? <ThermostatIcon/> :
+								ip.name === "Humidity" ? <OpacityIcon/> :
+								ip.name === "CO2" ? <Co2Icon/> :
+								ip.name === "Water" ? <ShowerIcon/> :
+								ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>
+								}>
+							</CardHeader>
 						<CardContent className={classes.overviewcard}>
-							<Typography
-								className={"MuiTypography--headingflex"}
-								variant={"h6"}
-								gutterBottom>{ip.name}
-								</Typography>
-							<Typography
-								className={"MuiTypography--subheading"}
-								 variant={"caption"}>{ip.id}
-							</Typography>
 							<Typography
 								className={"MuiTypography--subheading"}
 								 variant={"caption"}>{ip.state.toString()}
 							</Typography>
-							<Typography
-								className={"MuiTypography--subheading"}
-								 variant={"caption"}>{ip.ip}
-							</Typography>
+							{ip.name === "Climate" ?
+								<ClimateData/>
+							:<div></div>}
 							{ip.name === "CO2" ?
 								<Co2Chart/>
 							:<div></div>}
@@ -107,17 +117,17 @@ const ProductDetails = () => {
 					</Grid>
 				))}
 
-				<Grid item xs={12} sm={12} md={12}>
-					<Stack spacing={2}>
-					<AddSchedule roomId={productId}/>
-					<ScheduleTable />
-					<AddInterval roomId={productId}/>
-					<IntervalTable />
-					<AddClimate roomId={productId} roomIps={product.ip}/>
-					<ClimateTable />
-					</Stack>
-				</Grid>
 			</Grid>
+						<Card elevation={3}>
+							<CardContent>
+								<ClimateChart roomId={productId} roomIps={product.ip}/>
+							</CardContent>
+						</Card>
+						<AddSchedule roomId={productId}/>
+						<ScheduleTable />
+						<AddInterval roomId={productId}/>
+						<IntervalTable />
+
 
 			</Stack>
 			)}
