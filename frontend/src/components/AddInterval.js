@@ -48,10 +48,17 @@ const AddInterval = (props) => {
 
   	let handleInterval = async (e) => {
 		e.preventDefault();
-		if(product.climate_interval.length === 0){
-			var intervalId=1
-		} else {
-			var intervalId=product.climate_interval.length+1
+		const intervalResponse = await axios
+		.get("/relayinterval")
+		.catch((err) => {
+			console.log("Err: ", err);
+		});
+		if (intervalResponse.status === 200) {
+			if(intervalResponse.data.length === 0){
+				var intervalId=1
+			} else {
+				var intervalId=intervalResponse.data.length+1
+			}
 		}
 		const payload = {
 			name: name,

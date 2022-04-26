@@ -10,7 +10,7 @@ export const ClimateData = () => {
 	const [humidityData, setHumidityData]=useState("")
 	const [temperatureData, setTemperatureData]=useState("")
 	const socket = io();
-	socket.connect('http://127.0.0.1/5000/')
+	socket.connect('http://127.0.0.1/5000')
 	socket.on('connect',function() {
 		socket.send()
 	})

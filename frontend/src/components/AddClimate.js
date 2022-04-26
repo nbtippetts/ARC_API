@@ -45,44 +45,54 @@ const AddClimate = (props) => {
 
   	let handleClimate = async (e) => {
 		e.preventDefault();
-		let ips = {}
-		roomIps.map(ip => {
-			switch (ip.name) {
-				case "CO2":
-					ips.co2Ip=ip.ip
-				case "Humidity":
-					ips.humidityIp=ip.ip
-				case "Temperature":
-					ips.temperatureIp=ip.ip
+		let ips = {
+			co2Ip:"",
+			humidityIp:"",
+			temperatureIp:""
+		}
+		roomIps.forEach(ip => {
+			if (ip.name === "CO2") {
+				ips.co2Ip=ip.ip
+			} else if (ip.name === "Humidity") {
+				ips.humidityIp=ip.ip
+			} else if (ip.name === "Temperature") {
+				ips.temperatureIp=ip.ip
 			}
 		})
-		if(product.climate.length === 0){
-			var climateId=1
-			var payload = {
-				name:'test',
-				buffer_parameters:buffer,
-				co2_parameters:co2,
-				co2_buffer_parameters:co2Buffer,
-				humidity_parameters:humidity,
-				temperature_parameters:temperature,
-				co2_relay_ip:ips.co2Ip,
-				humidity_relay_ip:ips.humidityIp,
-				exhaust_relay_ip:ips.temperatureIp
-			}
-		} else {
-			var climateId=product.climate.length+1
-			var payload = {
-				name:'test',
-				buffer_parameters:buffer,
-				co2_parameters:co2,
-				co2_buffer_parameters:co2Buffer,
-				humidity_parameters:humidity,
-				temperature_parameters:temperature,
-				climate_start_time:start.toLocaleString() + '',
-				climate_end_time:end.toLocaleString() + '',
-				co2_relay_ip:ips.co2Ip,
-				humidity_relay_ip:ips.humidityIp,
-				exhaust_relay_ip:ips.temperatureIp
+		const climateResponse = await axios
+		.get("/climate_parameters")
+		.catch((err) => {
+			console.log("Err: ", err);
+		});
+		if (climateResponse.status === 200) {
+			if(climateResponse.data.length === 0){
+				var climateId=1
+				var payload = {
+					name:'test',
+					buffer_parameters:buffer,
+					co2_parameters:co2,
+					co2_buffer_parameters:co2Buffer,
+					humidity_parameters:humidity,
+					temperature_parameters:temperature,
+					co2_relay_ip:ips.co2Ip,
+					humidity_relay_ip:ips.humidityIp,
+					exhaust_relay_ip:ips.temperatureIp
+				}
+			} else {
+				var climateId=climateResponse.data.length+1
+				var payload = {
+					name:'test',
+					buffer_parameters:buffer,
+					co2_parameters:co2,
+					co2_buffer_parameters:co2Buffer,
+					humidity_parameters:humidity,
+					temperature_parameters:temperature,
+					climate_start_time:start.toLocaleString() + '',
+					climate_end_time:end.toLocaleString() + '',
+					co2_relay_ip:ips.co2Ip,
+					humidity_relay_ip:ips.humidityIp,
+					exhaust_relay_ip:ips.temperatureIp
+				}
 			}
 		}
 
@@ -91,7 +101,6 @@ const AddClimate = (props) => {
 		.catch((err) => {
 			console.log("Err: ", err);
 		});
-		console.log(response);
 		if (response.status === 201) {
 			product.climate.push(response.data)
 			console.log(product)

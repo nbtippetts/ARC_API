@@ -52,15 +52,17 @@ const ProductDetails = () => {
 		dispatch(selectedProduct(response.data));
 	};
 	const fetchClimateLogs = async (id) => {
+		dispatch(setChartLogs([]));
+		dispatch(setLogs([]));
 		const response = await axios
-		.get(`http://localhost:5000/room/${id}/ip_logs`)
+		.get(`http://localhost:5000/room/${id}/ip_chart_logs`)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});
 		if (response.status === 200) {
 			const displayLogs = response.data.climate_log[0].slice(0,20)
 			dispatch(setChartLogs(displayLogs));
-			dispatch(setLogs(response.data.climate_log[0].reverse()));
+			dispatch(setLogs(response.data.climate_log[0]));
 		}
 	}
 	useEffect(() => {

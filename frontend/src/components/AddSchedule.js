@@ -46,10 +46,17 @@ const AddSchedule = (props) => {
 
   	let handleSchedule = async (e) => {
 		e.preventDefault();
-		if(product.climate_schedule.length === 0){
-			var scheduleId=1
-		} else {
-			var scheduleId=product.climate_schedule.length+1
+		const scheduleResponse = await axios
+		.get("/relayschedule")
+		.catch((err) => {
+			console.log("Err: ", err);
+		});
+		if (scheduleResponse.status === 200) {
+			if(scheduleResponse.data.length === 0){
+				var scheduleId=1
+			} else {
+				var scheduleId=scheduleResponse.data.length+1
+			}
 		}
 		const payload = {
 			name: name,

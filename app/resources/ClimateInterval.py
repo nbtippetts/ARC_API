@@ -40,11 +40,6 @@ interval_parser.add_argument(
 class RelayIntervalList(Resource):
 	@marshal_with(resource_fields)
 	def get(self):
-		jobs = appscheduler.get_jobs()
-		print(jobs)
-		for job in jobs:
-			print(job.trigger)
-
 		results = ClimateIntervalModel.query.all()
 		return results, 200
 
