@@ -1,13 +1,6 @@
-import { Action } from "history";
 import { ActionTypes } from "../constants/action-types";
 const intialState = {
   products: [],
-  product: {
-    climate: [],
-    climate_schedule:[],
-    climate_interval:[],
-    IP:[]
-  },
   ips: [],
 };
 

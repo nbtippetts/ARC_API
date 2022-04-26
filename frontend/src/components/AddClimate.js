@@ -67,33 +67,22 @@ const AddClimate = (props) => {
 		if (climateResponse.status === 200) {
 			if(climateResponse.data.length === 0){
 				var climateId=1
-				var payload = {
-					name:'test',
-					buffer_parameters:buffer,
-					co2_parameters:co2,
-					co2_buffer_parameters:co2Buffer,
-					humidity_parameters:humidity,
-					temperature_parameters:temperature,
-					co2_relay_ip:ips.co2Ip,
-					humidity_relay_ip:ips.humidityIp,
-					exhaust_relay_ip:ips.temperatureIp
-				}
 			} else {
-				var climateId=climateResponse.data.length+1
-				var payload = {
-					name:'test',
-					buffer_parameters:buffer,
-					co2_parameters:co2,
-					co2_buffer_parameters:co2Buffer,
-					humidity_parameters:humidity,
-					temperature_parameters:temperature,
-					climate_start_time:start.toLocaleString() + '',
-					climate_end_time:end.toLocaleString() + '',
-					co2_relay_ip:ips.co2Ip,
-					humidity_relay_ip:ips.humidityIp,
-					exhaust_relay_ip:ips.temperatureIp
-				}
+				climateId=climateResponse.data.length+1
 			}
+		}
+		var payload = {
+			name:'test',
+			buffer_parameters:buffer,
+			co2_parameters:co2,
+			co2_buffer_parameters:co2Buffer,
+			humidity_parameters:humidity,
+			temperature_parameters:temperature,
+			climate_start_time:start.toLocaleString() + '',
+			climate_end_time:end.toLocaleString() + '',
+			co2_relay_ip:ips.co2Ip,
+			humidity_relay_ip:ips.humidityIp,
+			exhaust_relay_ip:ips.temperatureIp
 		}
 
 		const response = await axios

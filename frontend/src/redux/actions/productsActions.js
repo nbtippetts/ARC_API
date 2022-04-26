@@ -1,5 +1,4 @@
 import { ActionTypes } from "../constants/action-types";
-import axios from "axios";
 
 export const setProducts = (products) => {
   return {

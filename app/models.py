@@ -1,4 +1,4 @@
-from app.app import db
+from app import db
 from datetime import datetime
 from tzlocal import get_localzone
 tz = get_localzone()

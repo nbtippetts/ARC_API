@@ -1,8 +1,8 @@
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setProducts } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Form, Button, Card, ListGroup, Container, Row, Col} from 'react-bootstrap';
+import { Card,Grid,TextField,Button} from '@mui/material';
 
 
 
@@ -27,17 +27,16 @@ const dispatch = useDispatch();
 		};
 
 			return (
-				<Container>
-					<Row>
-						<Form onSubmit={handleSubmit}>
-							<Form.Group className="mb-3" controlId="formGroupEmail">
-									<Form.Label>Create A Room</Form.Label>
-									<Form.Control type="text" onChange={(e) => setName(e.target.value)} placeholder="Create A Room" />
-								</Form.Group>
+				<Grid container spacing={2}>
+					<Grid item xs={6}>
+						<Card elevation={3} sx={{ maxWidth: 345 }}>
+							<form onSubmit={handleSubmit}>
+								<TextField id="standard-basic" label="Create A Room" variant="standard" placeholder="Create A Room" onChange={e => setName(e.target.value)} />
 								<Button variant="primary" type="submit">ADD</Button>
-						</Form>
-					</Row>
-				</Container>
+							</form>
+						</Card>
+					</Grid>
+				</Grid>
 			);
 };
 

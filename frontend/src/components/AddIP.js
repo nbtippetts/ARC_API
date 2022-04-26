@@ -1,8 +1,8 @@
+/* eslint-disable array-callback-return */
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIPProducts, removeSelectedIP } from "../redux/actions/productsActions";
 import axios from "axios";
-import { Form} from 'react-bootstrap';
 import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
@@ -28,7 +28,7 @@ const AddIP = (props) => {
 		if (response.status === 201) {
 			dispatch(removeSelectedIP(ipIndexId));
 			products.map((product,index) => {
-				if(product.id==roomId){
+				if(product.id===roomId){
 					product.ip.push(response.data)
 				}
 			})
@@ -42,14 +42,14 @@ const AddIP = (props) => {
 		setFocusItemId(focusItemId === key ? -1 : key);
   	}
 	return(
-			<Form onSubmit={handleSubmit}>
+			<form onSubmit={handleSubmit}>
 				<Stack direction="row" spacing={2}>
 					{products.map((product,index) => (
 						<MenuItem selected={focusItemId === index} onClick={() => handleSelect(index,product.id)} value={product.name}>{product.name}</MenuItem>
 					))}
 				<Button variant="primary" type="submit">ADD</Button>
 				</Stack>
-			</Form>
+			</form>
 	);
 };
 

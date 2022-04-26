@@ -25,6 +25,10 @@ import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
 import { makeStyles } from "@mui/styles";
 import { ClimateData } from "./ClimateData";
+import AddClimate from "./AddClimate";
+import ClimateTable from "./ClimateTable";
+import { ClimateLogs } from "./ClimateLogs";
+
 const useStyles = makeStyles(theme => ({
   appBar: {
     top: "auto",
@@ -40,7 +44,6 @@ const useStyles = makeStyles(theme => ({
 const ProductDetails = () => {
 	const { productId } = useParams();
 	let product = useSelector((state) => state.product);
-	// const logs = useSelector((state) => state.allLogs.logs);
 	const dispatch = useDispatch();
 	const classes = useStyles();
 	const fetchProductDetail = async (id) => {
@@ -52,17 +55,15 @@ const ProductDetails = () => {
 		dispatch(selectedProduct(response.data));
 	};
 	const fetchClimateLogs = async (id) => {
-		dispatch(setChartLogs([]));
-		dispatch(setLogs([]));
 		const response = await axios
 		.get(`http://localhost:5000/room/${id}/ip_chart_logs`)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});
 		if (response.status === 200) {
+			dispatch(setLogs(response.data.climate_log[0]));
 			const displayLogs = response.data.climate_log[0].slice(0,20)
 			dispatch(setChartLogs(displayLogs));
-			dispatch(setLogs(response.data.climate_log[0]));
 		}
 	}
 	useEffect(() => {
@@ -101,9 +102,9 @@ const ProductDetails = () => {
 								className={"MuiTypography--subheading"}
 								 variant={"caption"}>{ip.state.toString()}
 							</Typography>
-							{ip.name === "Climate" ?
+							{/* {ip.name === "Climate" ?
 								<ClimateData/>
-							:<div></div>}
+							:<div></div>} */}
 							{ip.name === "CO2" ?
 								<Co2Chart/>
 							:<div></div>}
@@ -120,11 +121,26 @@ const ProductDetails = () => {
 				))}
 
 			</Grid>
-						<Card elevation={3}>
-							<CardContent>
-								<ClimateChart roomId={productId} roomIps={product.ip}/>
-							</CardContent>
-						</Card>
+		<Grid container spacing={2 }direction="row" justify="center" alignItems="stretch">
+		<Grid item xs={12} sm={12} md={8}>
+			<Grid container spacing={3}>
+				<Grid item xs={12}>
+						<ClimateChart />
+				</Grid>
+				<Grid item xs={12}>
+						<AddClimate roomId={productId} roomIps={product.ip}/>
+						<ClimateTable />
+				</Grid>
+			</Grid>
+			</Grid>
+			<Grid item xs={12} sm={12} md={4}>
+					<Grid style={{ display: 'flex', height: '100%',}}>
+						<ClimateLogs />
+					</Grid>
+				</Grid>
+			</Grid>
+
+
 						<AddSchedule roomId={productId}/>
 						<ScheduleTable />
 						<AddInterval roomId={productId}/>

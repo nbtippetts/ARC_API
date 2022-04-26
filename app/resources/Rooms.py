@@ -1,7 +1,7 @@
 import logging
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
-from app.models import RoomModel, IPModel, ClimateLogModel
-from app.app import db, appscheduler, api
+from models import RoomModel, IPModel, ClimateLogModel
+from app import db, appscheduler, api
 from flask import make_response
 from datetime import datetime
 

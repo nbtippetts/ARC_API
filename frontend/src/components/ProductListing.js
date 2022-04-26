@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { setProducts, setIPS, removeSelectedProduct } from "../redux/actions/productsActions";
+import { setProducts, setIPS } from "../redux/actions/productsActions";
+import { resetLogs } from '../redux/actions/climateLogActions';
 import ProductComponent from "./ProductComponent";
 
 const ProductPage = () => {
@@ -34,6 +35,7 @@ const ProductPage = () => {
   useEffect(() => {
     fetchProducts();
     fetchIPS();
+    dispatch(resetLogs());
   }, []);
 
   console.log("Products :", products);

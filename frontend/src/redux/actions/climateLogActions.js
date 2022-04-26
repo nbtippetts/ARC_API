@@ -1,5 +1,4 @@
 import { ActionTypes } from "../constants/action-types";
-import axios from "axios";
 
 export const setLogs = (logs) => {
   return {
@@ -11,5 +10,11 @@ export const setChartLogs = (logs) => {
   return {
     type: ActionTypes.SET_CHART_LOGS,
     payload: logs,
+  };
+};
+
+export const resetLogs = () => {
+  return {
+    type: ActionTypes.RESET_LOGS,
   };
 };

@@ -1,3 +1,4 @@
+/* eslint-disable array-callback-return */
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIP, removeSelectedProduct, removeSelectedIPProduct } from "../redux/actions/productsActions";
@@ -26,9 +27,9 @@ const DeleteIP = (props) => {
 		if (response.status === 204) {
 			dispatch(removeSelectedProduct());
 			products.map(product => {
-				if(product.id==roomId){
+				if(product.id===roomId){
 					product.ip.map((currentIp,index) => {
-						if(currentIp.id==id){
+						if(currentIp.id===id){
 							ips.push(currentIp)
 							product.ip.splice(index,1)
 						}

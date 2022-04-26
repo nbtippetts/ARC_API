@@ -145,12 +145,12 @@ const ProductComponent = () => {
 		);
 	});
 	return(
-		<Container maxWidth="lg">
+		<Container>
 		<Stack spacing={2}>
-			<>{renderList}</>
 			<Grid container spacing={2}>
 				<>{ipList}</>
 			</Grid>
+			<>{renderList}</>
 
 		</Stack>
 		</Container>

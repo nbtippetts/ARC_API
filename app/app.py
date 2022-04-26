@@ -1,4 +1,4 @@
-from app.config import env_config
+from config import env_config
 from email.policy import default
 from flask_socketio import SocketIO
 from flask import Flask
@@ -30,13 +30,13 @@ ma = Marshmallow()
 socketio = SocketIO()
 cors = CORS()
 jobstores = {
-    'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
-  		# 'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
-  		# 	os.getenv('DB_USER', 'flask'),
-  		# 	os.getenv('DB_PASSWORD', ''),
-  		# 	os.getenv('DB_HOST', 'mariadb'),
-  		# 	os.getenv('DB_NAME', 'flask')
-  		# ))
+    # 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
+  		'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
+  			os.getenv('DB_USER', 'flask'),
+  			os.getenv('DB_PASSWORD', ''),
+  			os.getenv('DB_HOST', 'mariadb'),
+  			os.getenv('DB_NAME', 'flask')
+  		))
 }
 executors = {
     'default': ThreadPoolExecutor(20),
@@ -67,15 +67,21 @@ appscheduler.add_listener(job_listener,
 
 
 def create_app(config_name):
-	import app.resources
+	import resources
 	app = Flask(__name__)
-	app.config.from_object(env_config['development'])
-	app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+	app.config.from_object(env_config["development"])
+	# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009"))
+	app.config['SQLALCHEMY_DATABASE_URI'] = 'mariadb+pymysql://{}:{}@{}/{}'.format(
+		os.getenv('DB_USER', 'flask'),
+		os.getenv('DB_PASSWORD', ''),
+		os.getenv('DB_HOST', 'mariadb'),
+		os.getenv('DB_NAME', 'flask')
+	)
 	api.init_app(app)
 
 	db.init_app(app)
 	with app.app_context():
-		from .models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel, NoteBookModel
+		from models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel, NoteBookModel
 		db.create_all()
 	migrate.init_app(app, db)
 	ma.init_app(app)

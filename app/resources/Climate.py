@@ -1,8 +1,8 @@
 from datetime import datetime
 from flask import request
 import json
-from app.app import db, appscheduler, api, socketio
-from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel
+from app import db, appscheduler, api, socketio
+from models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 import logging
 from .utils import start_task, end_task, get_local_time, is_time_between, check_ip_state
@@ -305,9 +305,9 @@ class Climate(Resource):
 		for c in climate:
 			climate_day_night = ClimateDayNightModel.query.filter_by(climate=c).first()
 			if climate_day_night:
-				check_time = is_time_between(
-					climate_day_night.climate_start_time, climate_day_night.climate_end_time)
-				print(check_time)
+				if climate_day_night.climate_start_time != climate_day_night.climate_end_time:
+					check_time = is_time_between(
+						climate_day_night.climate_start_time, climate_day_night.climate_end_time)
 				if check_time:
 					climate = c
 				else:
