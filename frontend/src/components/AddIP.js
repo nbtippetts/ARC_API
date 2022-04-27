@@ -20,7 +20,7 @@ const AddIP = (props) => {
 	let handleSubmit = async (e) => {
 		e.preventDefault();
 		const response = await axios
-		.patch("http://localhost:5000/room/"+roomId+"/ip/"+id)
+		.patch("http://192.168.1.42:5000/room/"+roomId+"/ip/"+id)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});

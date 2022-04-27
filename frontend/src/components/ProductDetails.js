@@ -48,7 +48,7 @@ const ProductDetails = () => {
 	const classes = useStyles();
 	const fetchProductDetail = async (id) => {
 		const response = await axios
-			.get(`http://localhost:5000/room/${id}`)
+			.get(`http://192.168.1.42:5000/room/${id}`)
 			.catch((err) => {
 				console.log("Err: ", err);
 			});
@@ -56,7 +56,7 @@ const ProductDetails = () => {
 	};
 	const fetchClimateLogs = async (id) => {
 		const response = await axios
-		.get(`http://localhost:5000/room/${id}/ip_chart_logs`)
+		.get(`http://192.168.1.42:5000/room/${id}/ip_chart_logs`)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});

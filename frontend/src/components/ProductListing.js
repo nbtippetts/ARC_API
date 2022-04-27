@@ -11,7 +11,7 @@ const ProductPage = () => {
   const dispatch = useDispatch();
   const fetchProducts = async () => {
     const response = await axios
-      .get("http://localhost:5000/rooms")
+      .get("http://192.168.1.42:5000/rooms")
       .catch((err) => {
         console.log("Err: ", err);
       });
@@ -22,7 +22,7 @@ const ProductPage = () => {
   };
   const fetchIPS = async () => {
     const response = await axios
-      .get("http://localhost:5000/all_ips")
+      .get("http://192.168.1.42:5000/all_ips")
       .catch((err) => {
         console.log("Err: ", err);
       });

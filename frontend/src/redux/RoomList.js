@@ -1,7 +1,7 @@
 	const RoomList = () => {
 		const fetchPosts = async () => {
 			var rooms = [];
-			axios.get("http://localhost:5000/rooms").then((response) => {
+			axios.get("http://192.168.1.42:5000/rooms").then((response) => {
 				response.data.forEach(element => {
 					var roomObj = {};
 					console.log(element)
@@ -55,7 +55,7 @@
 	};
 	const getIPS = () => {
 		const fetchPosts = async () => {
-			axios.get("http://localhost:5000/all_ips").then((response) => {
+			axios.get("http://192.168.1.42:5000/all_ips").then((response) => {
 				console.log(response.data)
 				setIPS(response.data)
 				setLoading(false);
