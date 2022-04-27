@@ -5,6 +5,7 @@ services:
   app:
     image: oceanize/flask_app:latest
     container_name: flask_app
+    restart: always
     build: ./app
     environment:
       # set database, memcached etc credentials
@@ -50,6 +51,7 @@ services:
   client:
     build: ./frontend
     image: react-flask-app-client
+    restart: always
     depends_on:
       # build those images first
       - app
