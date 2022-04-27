@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import DeleteRoom from "./DeleteRoom";
 import AddIP from "./AddIP";
 import DeleteIP from "./DeleteIP";
+import AddRoom from './AddRoom';
 import { Button, Stack, Card, CardHeader, CardActionArea, CardContent, Container,Typography,Grid} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import Collapse from '@mui/material/Collapse';
@@ -107,7 +108,7 @@ const ProductComponent = () => {
 		);
 	});
 	const ipList = ips.map((ipData,index) => {
-		const { id, name, ip } = ipData;
+		const { id, name } = ipData;
 		return (
 				<Grid item xs={12} sm={6} md={4}>
 				<Card elevation={3} sx={{ minWidth: 275 }}>
@@ -147,6 +148,7 @@ const ProductComponent = () => {
 	return(
 		<Container>
 		<Stack spacing={2}>
+			<AddRoom />
 			<Grid container spacing={2}>
 				<>{ipList}</>
 			</Grid>

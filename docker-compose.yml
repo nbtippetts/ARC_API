@@ -47,6 +47,14 @@ services:
       MYSQL_USER: flask
       MYSQL_PASSWORD: slimdingo85
 
+  client:
+    build: ./frontend
+    image: react-flask-app-client
+    depends_on:
+      # build those images first
+      - app
+    ports:
+      - "3000:80"
 # volumes definition here
 volumes:
   # just a persistance data

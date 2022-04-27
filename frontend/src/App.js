@@ -8,13 +8,12 @@ import {
 
 import ProductListing from './components/ProductListing';
 import ProductDetails from './components/ProductDetails';
-import AddRoom from './components/AddRoom';
 
 function App() {
 	return (
 			<Router>
 					<Routes>
-						<Route path='/' element={<><AddRoom /><ProductListing /></>}/>
+						<Route path='/' element={<ProductListing />}/>
               			<Route path="/room/:productId" element={<ProductDetails />} />
 					</Routes>
 			</Router>
