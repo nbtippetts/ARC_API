@@ -5,7 +5,7 @@ from app.app import db, appscheduler, api, socketio
 from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 import logging
-from .utils import start_task, end_task, get_local_time, is_time_between, check_ip_state
+from .utils import start_task, end_task, get_local_datetime, is_time_between, check_ip_state
 from time import sleep
 
 
@@ -371,7 +371,7 @@ class ClimateLog(Resource):
 		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
-		log_timestamp = get_local_time()
+		log_timestamp = get_local_datetime()
 		climate_log = ClimateLogModel(
 			co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], timestamp=log_timestamp, IP=ips)
 		db.session.add(climate_log)
