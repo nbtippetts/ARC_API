@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,10 +24,11 @@ import { Co2Chart } from "./Co2Chart";
 import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
 import { makeStyles } from "@mui/styles";
-import { ClimateData } from "./ClimateData";
+// import { ClimateData } from "./ClimateData";
 import AddClimate from "./AddClimate";
 import ClimateTable from "./ClimateTable";
 import { ClimateLogs } from "./ClimateLogs";
+import { RelayControl } from "./RelayControl";
 
 const useStyles = makeStyles(theme => ({
   appBar: {
@@ -41,22 +42,25 @@ const useStyles = makeStyles(theme => ({
     justifyContent:"center",
   }
 }));
+
 const ProductDetails = () => {
 	const { productId } = useParams();
 	let product = useSelector((state) => state.product);
 	const dispatch = useDispatch();
 	const classes = useStyles();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const fetchProductDetail = async (id) => {
 		const response = await axios
-			.get(`http://192.168.1.42:5000/room/${id}`)
+			.get(`/room/${id}`)
 			.catch((err) => {
 				console.log("Err: ", err);
 			});
 		dispatch(selectedProduct(response.data));
 	};
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	const fetchClimateLogs = async (id) => {
 		const response = await axios
-		.get(`http://192.168.1.42:5000/room/${id}/ip_chart_logs`)
+		.get(`/room/${id}/ip_chart_logs`)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});
@@ -73,7 +77,7 @@ const ProductDetails = () => {
 		return () => {
 			dispatch(removeSelectedProduct());
 		};
-	}, [productId]);
+	}, [dispatch, fetchClimateLogs, fetchProductDetail, productId]);
 
 	return (
 		<Container maxWidth={false}>
@@ -86,7 +90,9 @@ const ProductDetails = () => {
 				<Grid item xs={12} sm={6} md={4}>
 					<Card elevation={3} sx={{ maxWidth: 345 }}>
 						<CardActionArea>
-							<CardHeader
+							<CardHeader action={
+									<RelayControl ip={ip.ip} />
+							}
 							title={ip.name}
 							subheader={
 								ip.name === "Climate" ? <CloudIcon/> :

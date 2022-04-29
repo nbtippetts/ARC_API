@@ -13,7 +13,7 @@ const DeleteRoom = (props) => {
 	let onDeleteClick = async (id) => {
 		console.log(id)
 		const response = await axios
-			.delete("http://192.168.1.42:5000/room/"+id)
+			.delete("/room/"+id)
 			.catch((err) => {
 				console.log("Err: ", err);
 				});

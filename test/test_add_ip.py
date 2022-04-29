@@ -35,7 +35,7 @@ payload = [
 count = 3
 for p in payload:
 	url = f"http://127.0.0.1:5000/room/1/ip/{count}"
-	# url = f"http://192.168.1.42:5000/ip"
+	# url = f"/ip"
 
 	response = requests.patch(url)
 	print(response.json())

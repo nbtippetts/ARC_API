@@ -3,16 +3,16 @@ RUN apk add --no-cache --virtual .build-deps g++ python3-dev libffi-dev openssl-
 	apk add --no-cache --update python3 && \
 	pip3 install --upgrade pip setuptools
 RUN pip3 install pendulum service_identity
-
-WORKDIR /app
-
-ENV FLASK_ENV production
+# Tell Python to not generate .pyc
+ENV PYTHONDONTWRITEBYTECODE 1
+# Turn off buffering
+ENV PYTHONUNBUFFERED 1
 
 RUN pip install PyMySQL
-COPY ./requirements.txt .
+COPY ./app/requirements.txt .
 RUN pip install -r requirements.txt
-COPY . .
-
+WORKDIR /app
+ADD . /app
 EXPOSE 5000
-
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "main:app"]
+# CMD ["python", "main.py"]

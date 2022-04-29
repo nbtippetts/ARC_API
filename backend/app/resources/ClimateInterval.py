@@ -1,5 +1,5 @@
-from app import db, appscheduler, api
-from models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel
+from app.app import db, appscheduler, api
+from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 from apscheduler.triggers.cron import CronTrigger
 import logging

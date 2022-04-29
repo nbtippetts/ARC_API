@@ -2,31 +2,6 @@
 # All rights reserved. Copyright (c) Oceanize Inc
 version: '3'
 services:
-  app:
-    image: oceanize/flask_app:latest
-    container_name: flask_app
-    restart: always
-    build: ./app
-    environment:
-      # set database, memcached etc credentials
-      DB_HOST: mariadb
-      DB_NAME: flask
-      DB_USER: flask
-      DB_PASSWORD: slimdingo85
-    volumes:
-      - ./app:/app
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-    links:
-      # network connection with these services
-      - mariadb
-    depends_on:
-      # build those images first
-      - mariadb
-    ports:
-      # bind on our 5000 port because most people have 80, 8080 already bound
-      - "5000:5000"
-
   mariadb:
     container_name: flask_mysql
     # let's grab from mysql 5.7 image
@@ -48,15 +23,33 @@ services:
       MYSQL_USER: flask
       MYSQL_PASSWORD: slimdingo85
 
-  client:
-    build: ./frontend
-    image: react-flask-app-client
+  app:
+    image: oceanize/flask_app:latest
+    container_name: flask_app
     restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      # set database, memcached etc credentials
+      DB_HOST: mariadb
+      DB_NAME: flask
+      DB_USER: flask
+      DB_PASSWORD: slimdingo85
+    volumes:
+      - ./backend:/app
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    links:
+      # network connection with these services
+      - mariadb
     depends_on:
       # build those images first
-      - app
+      - mariadb
     ports:
-      - "3000:80"
+      # bind on our 5000 port because most people have 80, 8080 already bound
+      - "5000:5000"
+
 # volumes definition here
 volumes:
   # just a persistance data

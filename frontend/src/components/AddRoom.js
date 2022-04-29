@@ -15,7 +15,7 @@ const dispatch = useDispatch();
 	let handleSubmit = async (e) => {
 		e.preventDefault();
 		const response = await axios
-      .put("http://192.168.1.42:5000/room/"+room_id,{name:room_name})
+      .put("/room/"+room_id,{name:room_name})
       .catch((err) => {
         console.log("Err: ", err);
 				});

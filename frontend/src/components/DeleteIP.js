@@ -19,7 +19,7 @@ const DeleteIP = (props) => {
 
 	let onDeleteClick = async (id) => {
 		const response = await axios
-		.delete("http://192.168.1.42:5000/room/"+roomId+"/ip/"+id)
+		.delete("/room/"+roomId+"/ip/"+id)
 		.catch((err) => {
 			console.log("Err: ", err);
 		});

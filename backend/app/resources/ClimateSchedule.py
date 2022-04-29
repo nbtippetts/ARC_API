@@ -1,6 +1,6 @@
 from datetime import datetime
-from app import db, appscheduler, api
-from models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel
+from app.app import db, appscheduler, api
+from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 from apscheduler.triggers.cron import CronTrigger
 import logging
@@ -252,7 +252,7 @@ class RelayControl(Resource):
 		return 'SUCCESS', 200
 
 
-api.add_resource(RelayControl, '/relay_control/')
+api.add_resource(RelayControl, '/relay_control')
 api.add_resource(RelaySchedule, '/room/<int:room_id>/relayschedule/<int:schedule_id>')
 api.add_resource(RoomRelayScheduleList, '/room/<int:room_id>/relayschedule')
 api.add_resource(RelayScheduleList, '/relayschedule')

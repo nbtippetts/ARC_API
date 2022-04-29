@@ -1,8 +1,8 @@
 from tzlocal import get_localzone
 from datetime import datetime
 import requests
-from app import db
-from models import IPModel, ClimateScheduleLogModel
+from app.app import db
+from app.models import IPModel, ClimateScheduleLogModel
 import logging
 
 def get_local_time():

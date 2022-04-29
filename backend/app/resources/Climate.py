@@ -1,8 +1,8 @@
 from datetime import datetime
 from flask import request
 import json
-from app import db, appscheduler, api, socketio
-from models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel
+from app.app import db, appscheduler, api, socketio
+from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 import logging
 from .utils import start_task, end_task, get_local_time, is_time_between, check_ip_state
@@ -285,12 +285,12 @@ climate_parser = reqparse.RequestParser()
 climate_parser.add_argument('co2', type=int, help='Invalid CO2')
 climate_parser.add_argument('humidity', type=float, help='Invalid Humidity')
 climate_parser.add_argument('temperature', type=float, help='Invalid Temperature')
-@socketio.on('message')
+# @socketio.on('message')
 class Climate(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
-		socketio.emit('message', json.dumps(args), broadcast=True)
+		# socketio.emit('message', json.dumps(args), broadcast=True)
 
 
 		ips = IPModel.query.filter_by(ip='192.168.0.23').first()
@@ -308,10 +308,10 @@ class Climate(Resource):
 				if climate_day_night.climate_start_time != climate_day_night.climate_end_time:
 					check_time = is_time_between(
 						climate_day_night.climate_start_time, climate_day_night.climate_end_time)
-				if check_time:
-					climate = c
-				else:
-					climate = ClimateModel.query.filter_by(IP=ips).first()
+					if check_time:
+						climate = c
+					else:
+						climate = ClimateModel.query.filter_by(IP=ips).first()
 
 		co2_buffer = climate.co2_parameters+climate.co2_buffer_parameters
 		humidity_plus = climate.humidity_parameters+climate.buffer_parameters
