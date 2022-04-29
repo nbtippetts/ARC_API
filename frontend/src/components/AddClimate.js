@@ -68,7 +68,7 @@ const AddClimate = (props) => {
 			if(climateResponse.data.length === 0){
 				var climateId=1
 			} else {
-				climateId=climateResponse.data.length+1
+				var climateId=climateResponse.data.length+1
 			}
 		}
 		var payload = {

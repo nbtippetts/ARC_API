@@ -6,6 +6,7 @@ services:
     container_name: flask_mysql
     # let's grab from mysql 5.7 image
     image: mariadb:latest
+    restart: always
     volumes:
         # pass volume named mysql-data to mysql container
       - mysql-data:/var/lib/mysql

@@ -9,6 +9,7 @@ const ProductPage = () => {
   const products = useSelector((state) => state.allProducts.products);
   const ips = useSelector((state) => state.allIPS.ips);
   const dispatch = useDispatch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchProducts = async () => {
     const response = await axios
       .get("/rooms")
@@ -20,6 +21,7 @@ const ProductPage = () => {
         dispatch(setProducts(response.data));
       }
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchIPS = async () => {
     const response = await axios
       .get("/all_ips")
@@ -36,7 +38,7 @@ const ProductPage = () => {
     fetchProducts();
     fetchIPS();
     dispatch(resetLogs());
-  }, []);
+  }, [dispatch, fetchIPS, fetchProducts]);
 
   console.log("Products :", products);
   console.log("IPS :", ips);

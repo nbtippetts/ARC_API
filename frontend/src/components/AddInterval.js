@@ -57,6 +57,7 @@ const AddInterval = (props) => {
 			if(intervalResponse.data.length === 0){
 				var intervalId=1
 			} else {
+				// eslint-disable-next-line no-redeclare
 				var intervalId=intervalResponse.data.length+1
 			}
 		}

@@ -12,9 +12,7 @@ const DeleteIP = (props) => {
 	const products = useSelector((state) => state.allProducts.products);
 	const ips = useSelector((state) => state.allIPS.ips);
 	const id = props.ipId;
-	const ipIndexId = props.indexId;
 	const roomId = props.roomId;
-	const roomIndex = props.index;
 	const dispatch = useDispatch();
 
 	let onDeleteClick = async (id) => {
