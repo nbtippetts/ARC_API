@@ -293,9 +293,9 @@ class Climate(Resource):
 		# socketio.emit('message', json.dumps(args), broadcast=True)
 
 
-		ips = IPModel.query.filter_by(ip='192.168.0.23').first()
-		# print(request.remote_addr)
-		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		# ips = IPModel.query.filter_by(ip='192.168.0.23').first()
+		print(request.remote_addr)
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
 
@@ -312,6 +312,8 @@ class Climate(Resource):
 						climate = c
 					else:
 						climate = ClimateModel.query.filter_by(IP=ips).first()
+				else:
+					climate = ClimateModel.query.filter_by(IP=ips).first()
 
 		co2_buffer = climate.co2_parameters+climate.co2_buffer_parameters
 		humidity_plus = climate.humidity_parameters+climate.buffer_parameters
@@ -364,9 +366,9 @@ class ClimateLog(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
-		ips = IPModel.query.filter_by(ip='192.168.0.16').first()
-		# print(request.remote_addr)
-		# ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
+		# ips = IPModel.query.filter_by(ip='192.168.0.16').first()
+		print(request.remote_addr)
+		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
 		climate_log = ClimateLogModel(
