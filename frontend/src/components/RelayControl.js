@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import axios from "axios";
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
@@ -9,8 +9,8 @@ const options = [
   'OFF',
 ];
 export const RelayControl = (props) => {
-  const ip = props.ip
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const ipAddress = props.ip
+  const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -25,12 +25,12 @@ export const RelayControl = (props) => {
       } else {
         relayState = "high"
       }
-      const payload={
-        ip:ip,
+      var payload={
+        ip:ipAddress,
         state:relayState
       }
       const response = await axios
-      .get("/relay_control",payload)
+      .get("/relay_control",{params: payload})
       .catch((err) => {
         console.log("Err: ", err);
       });
@@ -61,7 +61,7 @@ export const RelayControl = (props) => {
           onClose={handleClose}
         >
           {options.map((option) => (
-            <MenuItem key={option} selected={option === 'ON'} onClick={handleSubmit}>
+            <MenuItem onClick={handleSubmit}>
               {option}
             </MenuItem>
           ))}

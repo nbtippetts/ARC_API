@@ -68,6 +68,7 @@ const AddClimate = (props) => {
 			if(climateResponse.data.length === 0){
 				var climateId=1
 			} else {
+				// eslint-disable-next-line no-redeclare
 				var climateId=climateResponse.data.length+1
 			}
 		}

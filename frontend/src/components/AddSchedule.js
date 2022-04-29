@@ -26,9 +26,6 @@ const AddSchedule = (props) => {
 	const [ipId, setIpId] = useState("");
 	const dispatch = useDispatch();
 
-	const handleChangeName = (newValue) => {
-		setName(newValue);
-	};
 	const handleChangeStart = (newValue) => {
 		setStart(newValue);
 	};
@@ -55,6 +52,7 @@ const AddSchedule = (props) => {
 			if(scheduleResponse.data.length === 0){
 				var scheduleId=1
 			} else {
+				// eslint-disable-next-line no-redeclare
 				var scheduleId=scheduleResponse.data.length+1
 			}
 		}

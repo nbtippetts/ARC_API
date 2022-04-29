@@ -11,7 +11,6 @@ import Button from '@mui/material/Button';
 const AddIP = (props) => {
 	const [focusItemId, setFocusItemId] = useState(-1);
 	const [roomId, setRoomId] = useState("");
-	const [roomIndexId, setRoomIndexId] = useState("");
 	const products = useSelector((state) => state.allProducts.products);
 	const id = props.ipId;
 	const ipIndexId = props.indexId;
@@ -27,7 +26,7 @@ const AddIP = (props) => {
 		console.log(response);
 		if (response.status === 201) {
 			dispatch(removeSelectedIP(ipIndexId));
-			products.map((product,index) => {
+			products.map((product) => {
 				if(product.id===roomId){
 					product.ip.push(response.data)
 				}
@@ -37,7 +36,6 @@ const AddIP = (props) => {
 		}
 	};
 	const handleSelect=(key,value)=>{
-		setRoomIndexId(key);
 		setRoomId(value);
 		setFocusItemId(focusItemId === key ? -1 : key);
   	}
