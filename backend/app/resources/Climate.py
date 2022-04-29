@@ -371,8 +371,9 @@ class ClimateLog(Resource):
 		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
+		log_timestamp = get_local_time()
 		climate_log = ClimateLogModel(
-			co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], IP=ips)
+			co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], timestamp=log_timestamp, IP=ips)
 		db.session.add(climate_log)
 		db.session.commit()
 		return 'SUCCESS', 200
