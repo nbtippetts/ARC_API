@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,7 +10,6 @@ const ProductPage = () => {
   const products = useSelector((state) => state.allProducts.products);
   const ips = useSelector((state) => state.allIPS.ips);
   const dispatch = useDispatch();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchProducts = async () => {
     const response = await axios
       .get("/rooms")
@@ -21,7 +21,6 @@ const ProductPage = () => {
         dispatch(setProducts(response.data));
       }
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchIPS = async () => {
     const response = await axios
       .get("/all_ips")
@@ -35,13 +34,11 @@ const ProductPage = () => {
 
 
   useEffect(() => {
+    dispatch(resetLogs());
     fetchProducts();
     fetchIPS();
-    dispatch(resetLogs());
-  }, [dispatch, fetchIPS, fetchProducts]);
+  }, []);
 
-  console.log("Products :", products);
-  console.log("IPS :", ips);
   return (
       <ProductComponent />
   );

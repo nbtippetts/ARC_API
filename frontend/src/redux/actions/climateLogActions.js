@@ -1,8 +1,14 @@
 import { ActionTypes } from "../constants/action-types";
 
-export const setLogs = (logs) => {
+export const setScheduleLogs = (logs) => {
   return {
-    type: ActionTypes.SET_LOGS,
+    type: ActionTypes.SET_SCHEDULE_LOGS,
+    payload: logs,
+  };
+};
+export const setClimateLogs = (logs) => {
+  return {
+    type: ActionTypes.SET_CLIMATE_LOGS,
     payload: logs,
   };
 };

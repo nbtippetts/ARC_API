@@ -79,6 +79,7 @@ const UpdateClimate = (props) => {
 		}
 		setOpen(false);
 	};
+// eslint-disable-next-line array-callback-return
 const renderList = product.climate.map((climateTime,index) => {
 	if(climateTime.climate_day_night.length !== 0) {
 		return (

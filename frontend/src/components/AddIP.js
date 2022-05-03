@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIPProducts, removeSelectedIP } from "../redux/actions/productsActions";
 import axios from "axios";
-import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 
@@ -41,12 +41,14 @@ const AddIP = (props) => {
   	}
 	return(
 			<form onSubmit={handleSubmit}>
-				<Stack direction="row" spacing={2}>
+				<Grid container spacing={2} direction="row">
 					{products.map((product,index) => (
+					<Grid item xs={12}>
 						<MenuItem selected={focusItemId === index} onClick={() => handleSelect(index,product.id)} value={product.name}>{product.name}</MenuItem>
+					</Grid>
 					))}
 				<Button variant="primary" type="submit">ADD</Button>
-				</Stack>
+				</Grid>
 			</form>
 	);
 };

@@ -14,12 +14,13 @@ import {
 	selectedProduct,
 	removeSelectedProduct
 } from "../redux/actions/productsActions";
-import { setLogs, setChartLogs } from '../redux/actions/climateLogActions';
+import { setScheduleLogs,setClimateLogs, setChartLogs } from '../redux/actions/climateLogActions';
 import AddInterval from "./AddInterval";
 import AddSchedule from "./AddSchedule";
 import IntervalTable from "./IntervalTable";
 import ScheduleTable from "./ScheduleTable";
 import { ClimateChart } from "./ClimateChart";
+import { ScheduleLogs } from "./ScheduleLogs";
 import { Co2Chart } from "./Co2Chart";
 import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
@@ -65,19 +66,31 @@ const ProductDetails = () => {
 			console.log("Err: ", err);
 		});
 		if (response.status === 200) {
-			dispatch(setLogs(response.data.climate_log[0]));
+			dispatch(setClimateLogs(response.data.climate_log[0]));
 			const displayLogs = response.data.climate_log[0].slice(0,20)
-			dispatch(setChartLogs(displayLogs));
+			dispatch(setChartLogs(displayLogs.reverse()));
+		}
+	}
+	const fetchScheduleLogs = async (id) => {
+		const response = await axios
+		.get(`/room/${id}/ip_logs`)
+		.catch((err) => {
+			console.log("Err: ", err);
+		});
+		if (response.status === 200) {
+			// console.log(response.data.climate_schedule_log[0])
+			dispatch(setScheduleLogs(response.data.climate_schedule_log));
 		}
 	}
 	useEffect(() => {
 		if (productId && productId !== "")
 		fetchProductDetail(productId);
+		fetchScheduleLogs(productId);
 		fetchClimateLogs(productId);
 		return () => {
 			dispatch(removeSelectedProduct());
 		};
-	}, [dispatch, fetchClimateLogs, fetchProductDetail, productId]);
+	}, [productId]);
 
 	return (
 		<Container maxWidth={false}>
@@ -87,8 +100,8 @@ const ProductDetails = () => {
 				<Stack spacing={2}>
 				<Grid container spacing={2}>
 				{product.ip.map((ip,ipIndex) => (
-				<Grid item xs={12} sm={6} md={4}>
-					<Card elevation={3} sx={{ maxWidth: 345 }}>
+				<Grid item xs={12} sm={6} md={4} align="center">
+					<Card elevation={3} sx={{ maxWidth: 345 }} align="left">
 						<CardActionArea>
 							<CardHeader action={
 									<RelayControl ip={ip.ip} />
@@ -108,6 +121,7 @@ const ProductDetails = () => {
 								className={"MuiTypography--subheading"}
 								 variant={"caption"}>{ip.state.toString()}
 							</Typography>
+						</CardContent>
 							{/* {ip.name === "Climate" ?
 								<ClimateData/>
 							:<div></div>} */}
@@ -120,14 +134,13 @@ const ProductDetails = () => {
 							{ip.name === "Temperature" ?
 								<TemperatureChart/>
 							:<div></div>}
-						</CardContent>
 						</CardActionArea>
 					</Card>
 					</Grid>
 				))}
 
 			</Grid>
-		<Grid container spacing={2 }direction="row" justify="center" alignItems="stretch">
+		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
 		<Grid item xs={12} sm={12} md={8}>
 			<Grid container spacing={3}>
 				<Grid item xs={12}>
@@ -145,14 +158,25 @@ const ProductDetails = () => {
 					</Grid>
 				</Grid>
 			</Grid>
-
-
+		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
+		<Grid item xs={12} sm={12} md={8}>
+			<Grid container spacing={3}>
+				<Grid item xs={12}>
 						<AddSchedule roomId={productId}/>
 						<ScheduleTable />
+				</Grid>
+				<Grid item xs={12}>
 						<AddInterval roomId={productId}/>
 						<IntervalTable />
-
-
+				</Grid>
+			</Grid>
+			</Grid>
+			<Grid item xs={12} sm={12} md={4}>
+					<Grid style={{ display: 'flex', height: '100%',}}>
+						<ScheduleLogs/>
+					</Grid>
+				</Grid>
+			</Grid>
 			</Stack>
 			)}
 			</Container>

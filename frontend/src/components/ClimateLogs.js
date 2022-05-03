@@ -2,7 +2,7 @@ import React from "react";
 import { DataGrid } from '@mui/x-data-grid'
 import { useSelector } from "react-redux";
 export const ClimateLogs = () => {
-	const logs = useSelector((state) => state.allLogs.logs);
+	const logs = useSelector((state) => state.allClimateLogs.climateLogs);
 		const columns = [
 		{ field: 'climate_log_id', headerName: 'ID', width: 70 },
 		{ field: 'co2', headerName: 'CO2', width: 130 },

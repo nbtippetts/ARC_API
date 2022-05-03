@@ -1,13 +1,22 @@
 import { ActionTypes } from "../constants/action-types";
 const intialState = {
-  logs: [],
+  climateLogs: [],
+  scheduleLogs: [],
   chartLogs: [],
 };
 
-export const logsReducer = (state = intialState, { type, payload }) => {
+export const scheduleLogsReducer = (state = intialState, { type, payload }) => {
   switch (type) {
-    case ActionTypes.SET_LOGS:
-      return { ...state, logs: payload };
+    case ActionTypes.SET_SCHEDULE_LOGS:
+      return { ...state, scheduleLogs: payload };
+    default:
+      return state;
+  }
+};
+export const climateLogsReducer = (state = intialState, { type, payload }) => {
+  switch (type) {
+    case ActionTypes.SET_CLIMATE_LOGS:
+      return { ...state, climateLogs: payload };
     default:
       return state;
   }

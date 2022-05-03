@@ -170,11 +170,14 @@ class IPLogs(Resource):
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		climate_schedule_log = [p.climate_schedule_log[:20] for p in IPModel.query.filter_by(room=rooms).all() if p.climate_schedule_log]
+		climate_schedule_log = [p.climate_schedule_log[:50] for p in IPModel.query.filter_by(room=rooms).all() if p.climate_schedule_log]
+		all_schedule_logs=[]
 		if len(climate_schedule_log) > 0:
-			for log in climate_schedule_log[0]:
-				log.timestamp = log.timestamp.strftime('%d %b, %I:%M %p')
-			return {'climate_schedule_log': climate_schedule_log}, 200
+			for log in climate_schedule_log:
+				for ft in log:
+					ft.timestamp = ft.timestamp.strftime('%d %b, %I:%M %p')
+					all_schedule_logs.append(ft)
+			return {'climate_schedule_log': all_schedule_logs}, 200
 		else:
 			return {'climate_schedule_log': climate_schedule_log}, 204
 
@@ -191,7 +194,7 @@ class IPChartLogs(Resource):
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		climate_log = [p.climate_log[:75]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
+		climate_log = [p.climate_log[:100]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
 		if len(climate_log) > 0:
 			for log in climate_log[0]:
 				log.timestamp = log.timestamp.strftime('%d %b, %I:%M %p')

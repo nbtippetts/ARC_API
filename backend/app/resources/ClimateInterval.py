@@ -1,9 +1,9 @@
 from app.app import db, appscheduler, api
 from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 import logging
-from .utils import start_task, end_task, get_local_time, is_time_between, check_ip_state
+from .utils import start_task, end_task, check_ip_state
 
 ip_marshaller = {
 	'id': fields.Integer,
@@ -135,26 +135,9 @@ class RelayInterval(Resource):
 		db.session.add(interval)
 		db.session.commit()
 
-		if args['interval_hour'] == 0:
-			interval_hour = '*'
-		else:
-			interval_hour = f"*/{str(args['interval_hour'])}"
-		if args['interval_minute'] == 0:
-			interval_minute = '*'
-		else:
-			interval_minute = f"*/{str(args['interval_minute'])}"
-
-		if args['duration_hour'] == 0:
-			duration_hour = '*'
-		else:
-			duration_hour = f"*/{str(args['duration_hour'])}"
-		if args['duration_minute'] == 0:
-			duration_minute = '*'
-		else:
-			duration_minute = f"*/{str(args['duration_minute'])}"
-
-		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
-		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
+		start_triggers = IntervalTrigger(
+			hours=args['interval_hour'], minutes=args['interval_minute'], jitter=1)
+		end_triggers = IntervalTrigger(hours=args['duration_hour'], minutes=args['duration_minute'])
 		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=[
                     'low', interval.IP.ip], replace_existing=True)
 		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=[
@@ -182,29 +165,10 @@ class RelayInterval(Resource):
 		db.session.add(interval)
 		db.session.commit()
 
-		if args['interval_hour'] == 0:
-			interval_hour = '*'
-		else:
-			interval_hour = f"*/{str(args['interval_hour'])}"
-		if args['interval_minute'] == 0:
-			interval_minute = '*'
-		else:
-			interval_minute = f"*/{str(args['interval_minute'])}"
-
-		if args['duration_hour'] == 0:
-			duration_hour = '*'
-		else:
-			duration_hour = f"*/{str(args['duration_hour'])}"
-		if args['duration_minute'] == 0:
-			duration_minute = '*'
-		else:
-			duration_minute = f"*/{str(args['duration_minute'])}"
-		start_triggers = CronTrigger(hour=interval_hour, minute=interval_minute)
-		end_triggers = CronTrigger(hour=duration_hour, minute=duration_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=[
-                    'low', interval.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=[
-                    'high', interval.IP.ip], replace_existing=True)
+		start_triggers = IntervalTrigger(hours=args['interval_hour'], minutes=args['interval_minute'], jitter=1)
+		end_triggers = IntervalTrigger(hours=args['duration_hour'], minutes=args['duration_minute'])
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
 		return interval, 201
 
 	def delete(self, room_id, interval_id):
