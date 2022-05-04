@@ -36,7 +36,7 @@ const DeleteIP = (props) => {
 			})
 			console.log(products)
 			dispatch(removeSelectedIPProduct(products));
-			dispatch(setIP(ips));
+			// dispatch(setIP(ips));
 		}
 	};
 

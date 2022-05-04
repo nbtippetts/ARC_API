@@ -85,7 +85,7 @@ const AddSchedule = (props) => {
 
   return (
     <div>
-      <Button variant="outlined" onClick={handleClickOpen}>
+      <Button size="small" onClick={handleClickOpen}>
         Create Schedule
       </Button>
       <Dialog open={open} onClose={handleClose}>

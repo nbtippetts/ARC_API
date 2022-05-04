@@ -49,40 +49,44 @@ const ProductDetails = () => {
 	let product = useSelector((state) => state.product);
 	const dispatch = useDispatch();
 	const classes = useStyles();
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	const fetchProductDetail = async (id) => {
-		const response = await axios
-			.get(`/room/${id}`)
+	useEffect(() => {
+		const fetchProductDetail = async (id) => {
+			const response = await axios
+				.get(`/room/${id}`)
+				.catch((err) => {
+					console.log("Err: ", err);
+				});
+			dispatch(selectedProduct(response.data));
+		};
+		const fetchClimateLogs = async (id) => {
+			const response = await axios
+			.get(`/room/${id}/ip_chart_logs`)
 			.catch((err) => {
 				console.log("Err: ", err);
 			});
-		dispatch(selectedProduct(response.data));
-	};
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	const fetchClimateLogs = async (id) => {
-		const response = await axios
-		.get(`/room/${id}/ip_chart_logs`)
-		.catch((err) => {
-			console.log("Err: ", err);
-		});
-		if (response.status === 200) {
-			dispatch(setClimateLogs(response.data.climate_log[0]));
-			const displayLogs = response.data.climate_log[0].slice(0,20)
-			dispatch(setChartLogs(displayLogs.reverse()));
+			if (response.status === 200) {
+				dispatch(setClimateLogs(response.data.climate_log[0]));
+				const displayLogs = response.data.climate_log[0].slice(0,20)
+				dispatch(setChartLogs(displayLogs.reverse()));
+			} else {
+				dispatch(setClimateLogs([]));
+				dispatch(setChartLogs([]));
+			}
 		}
-	}
-	const fetchScheduleLogs = async (id) => {
-		const response = await axios
-		.get(`/room/${id}/ip_logs`)
-		.catch((err) => {
-			console.log("Err: ", err);
-		});
-		if (response.status === 200) {
-			// console.log(response.data.climate_schedule_log[0])
-			dispatch(setScheduleLogs(response.data.climate_schedule_log));
+		const fetchScheduleLogs = async (id) => {
+			const response = await axios
+			.get(`/room/${id}/ip_logs`)
+			.catch((err) => {
+				console.log("Err: ", err);
+			});
+			if (response.status === 200) {
+				// console.log(response.data.climate_schedule_log[0])
+				dispatch(setScheduleLogs(response.data.climate_schedule_log));
+			} else {
+				dispatch(setScheduleLogs([]));
+
+			}
 		}
-	}
-	useEffect(() => {
 		if (productId && productId !== "")
 		fetchProductDetail(productId);
 		fetchScheduleLogs(productId);
@@ -143,37 +147,31 @@ const ProductDetails = () => {
 		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
 		<Grid item xs={12} sm={12} md={8}>
 			<Grid container spacing={3}>
-				<Grid item xs={12}>
+				<Grid item xs={11} sm={11} md={12}>
 						<ClimateChart />
 				</Grid>
 				<Grid item xs={12}>
 						<AddClimate roomId={productId} roomIps={product.ip}/>
 						<ClimateTable />
 				</Grid>
-			</Grid>
-			</Grid>
-			<Grid item xs={12} sm={12} md={4}>
-					<Grid style={{ display: 'flex', height: '100%',}}>
-						<ClimateLogs />
-					</Grid>
+				<Grid item xs={12} sm={12} md={12} lg={6}>
+						<ScheduleLogs/>
 				</Grid>
-			</Grid>
-		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
-		<Grid item xs={12} sm={12} md={8}>
-			<Grid container spacing={3}>
-				<Grid item xs={12}>
+				<Grid item xs={12} sm={12} md={12} lg={6}>
+					<Stack spacing={2}>
 						<AddSchedule roomId={productId}/>
 						<ScheduleTable />
-				</Grid>
-				<Grid item xs={12}>
+
 						<AddInterval roomId={productId}/>
 						<IntervalTable />
+					</Stack>
 				</Grid>
 			</Grid>
+
 			</Grid>
 			<Grid item xs={12} sm={12} md={4}>
-					<Grid style={{ display: 'flex', height: '100%',}}>
-						<ScheduleLogs/>
+					<Grid style={{ display: 'flex'}}>
+						<ClimateLogs />
 					</Grid>
 				</Grid>
 			</Grid>

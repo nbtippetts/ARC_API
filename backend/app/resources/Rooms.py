@@ -115,6 +115,7 @@ climate_schedule_log_marshaller = {
 	'name': fields.String,
 	'start_time': fields.String,
 	'end_time': fields.String,
+	'timestamp': fields.String,
 	'ip_id': fields.Integer,
 }
 climate_log_marshaller = {
@@ -175,7 +176,7 @@ class IPLogs(Resource):
 		if len(climate_schedule_log) > 0:
 			for log in climate_schedule_log:
 				for ft in log:
-					ft.timestamp = ft.timestamp.strftime('%d %b, %I:%M %p')
+					ft.timestamp = ft.timestamp.strftime('%d %b')
 					all_schedule_logs.append(ft)
 			return {'climate_schedule_log': all_schedule_logs}, 200
 		else:

@@ -366,7 +366,7 @@ class ClimateLog(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
 		print(args)
-		# ips = IPModel.query.filter_by(ip='192.168.0.16').first()
+		# ips = IPModel.query.filter_by(ip='192.168.0.23').first()
 		print(request.remote_addr)
 		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:

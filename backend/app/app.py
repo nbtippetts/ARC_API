@@ -30,7 +30,7 @@ ma = Marshmallow()
 socketio = SocketIO()
 cors = CORS()
 jobstores = {
-    # 'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
+		#  'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
   		'default': SQLAlchemyJobStore(url='mariadb+pymysql://{}:{}@{}/{}'.format(
   			os.getenv('DB_USER', 'flask'),
   			os.getenv('DB_PASSWORD', ''),
@@ -80,6 +80,7 @@ def create_app(config_name):
 	api.init_app(app)
 
 	db.init_app(app)
+	db.app = app
 	with app.app_context():
 		from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel, NoteBookModel
 		db.create_all()

@@ -30,11 +30,11 @@ export const chartLogsReducer = (state = intialState, { type, payload }) => {
   }
 };
 
-export const resetLogsReducer = (state = {}, { type}) => {
+export const resetLogsReducer = (state = intialState, { type, payload }) => {
   console.log(type);
   switch (type) {
     case ActionTypes.RESET_LOGS:
-      return intialState
+      return state
     default:
       return state;
   }

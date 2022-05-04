@@ -24,7 +24,7 @@ export const productsReducer = (state = intialState, { type, payload }) => {
 
     case ActionTypes.REMOVE_SELECTED_IP_PRODUCT:
       console.log(payload)
-      return { ...state, payload };
+      return { ...state, products: payload };
 
     case ActionTypes.REMOVE_SELECTED_PRODUCT:
       console.log(payload)

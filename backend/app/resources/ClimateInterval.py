@@ -3,7 +3,7 @@ from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateInterval
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 from apscheduler.triggers.interval import IntervalTrigger
 import logging
-from .utils import start_task, end_task, check_ip_state
+from .utils import start_task, end_task, check_ip_state, test_start_task, test_end_task
 
 ip_marshaller = {
 	'id': fields.Integer,
@@ -130,18 +130,15 @@ class RelayInterval(Resource):
 		if results:
 			abort(409, message="Interval {} already exist".format(interval_id))
 
-		interval = ClimateIntervalModel(climate_interval_id=interval_id, name=args['name'], interval_hour=args['interval_hour'], interval_minute=args[
-                    'interval_minute'], duration_hour=args['duration_hour'], duration_minute=args['duration_minute'], IP=ip_id, room=rooms)
+		interval = ClimateIntervalModel(climate_interval_id=interval_id, name=args['name'], interval_hour=args['interval_hour'],
+			interval_minute=args['interval_minute'], duration_hour=args['duration_hour'], duration_minute=args['duration_minute'], IP=ip_id, room=rooms)
 		db.session.add(interval)
 		db.session.commit()
 
-		start_triggers = IntervalTrigger(
-			hours=args['interval_hour'], minutes=args['interval_minute'], jitter=1)
+		start_triggers = IntervalTrigger(hours=args['interval_hour'], minutes=args['interval_minute'], jitter=1)
 		end_triggers = IntervalTrigger(hours=args['duration_hour'], minutes=args['duration_minute'])
-		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=[
-                    'low', interval.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=[
-                    'high', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
 		return interval, 201
 
 	@marshal_with(resource_fields)

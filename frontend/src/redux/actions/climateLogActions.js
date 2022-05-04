@@ -19,7 +19,7 @@ export const setChartLogs = (logs) => {
   };
 };
 
-export const resetLogs = () => {
+export const resetLogs = (logs) => {
   return {
     type: ActionTypes.RESET_LOGS,
   };
