@@ -1,4 +1,7 @@
 import requests
+from time import sleep
+import random
+
 
 # url = "http://127.0.0.1:5000/room/1/climate-parameters/1"
 # # url = "http://192.168.0.215:5000/room/1/climate-parameters/1"
@@ -12,17 +15,21 @@ import requests
 # 	'exhaust_relay_ip': '192.168.0.69'
 # }
 url = "http://127.0.0.1:5000/climate"
-# url = "http://192.168.0.215:5000/room/1/climate-parameters/1"
-payload={
-    "co2": 500,
-    "humidity": 20,
-    "temperature": 80
-}
+while True:
+    co2 = random.randint(500, 2000)
+    hum = random.randint(10, 60)
+    temp = random.randint(50, 95)
+    payload={
+        "co2": co2,
+        "humidity": hum,
+        "temperature": temp
+    }
 # response = requests.put(url, data=payload)
 # print(response.json())
 
-response = requests.get(url, params=payload)
-print(response.json())
+    response = requests.get(url, params=payload)
+    print(response.json())
+    sleep(5)
 
 # response = requests.patch(url, data=payload,)
 # print(response.text)

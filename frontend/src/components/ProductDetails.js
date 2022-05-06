@@ -25,7 +25,7 @@ import { Co2Chart } from "./Co2Chart";
 import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
 import { makeStyles } from "@mui/styles";
-// import { ClimateData } from "./ClimateData";
+import { ClimateData } from "./ClimateData";
 import AddClimate from "./AddClimate";
 import ClimateTable from "./ClimateTable";
 import { ClimateLogs } from "./ClimateLogs";
@@ -126,9 +126,9 @@ const ProductDetails = () => {
 								 variant={"caption"}>{ip.state.toString()}
 							</Typography>
 						</CardContent>
-							{/* {ip.name === "Climate" ?
-								<ClimateData/>
-							:<div></div>} */}
+							{ip.name === "Climate" ?
+								<ClimateData ipId={ip.id}/>
+							:<div></div>}
 							{ip.name === "CO2" ?
 								<Co2Chart/>
 							:<div></div>}

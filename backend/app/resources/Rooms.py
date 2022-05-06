@@ -171,7 +171,7 @@ class IPLogs(Resource):
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		climate_schedule_log = [p.climate_schedule_log[:50] for p in IPModel.query.filter_by(room=rooms).all() if p.climate_schedule_log]
+		climate_schedule_log = [p.climate_schedule_log[:100] for p in IPModel.query.filter_by(room=rooms).all() if p.climate_schedule_log]
 		all_schedule_logs=[]
 		if len(climate_schedule_log) > 0:
 			for log in climate_schedule_log:

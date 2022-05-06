@@ -35,6 +35,8 @@ class IPModel(db.Model):
 	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='IP',lazy='select', order_by='ClimateScheduleLogModel.climate_schedule_log_id.desc()')
 	climate = db.relationship('ClimateModel', cascade='all, delete', backref='IP', lazy='joined')
 	climate_log = db.relationship('ClimateLogModel', backref='IP',lazy='select', order_by='ClimateLogModel.climate_log_id.desc()')
+	climate_reads = db.relationship(
+		'ClimateLiveDataModel', backref='IP', lazy='select')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
@@ -118,6 +120,16 @@ class ClimateScheduleLogModel(db.Model):
 class ClimateLogModel(db.Model):
 	__tablename__ = 'climate_log'
 	climate_log_id = db.Column(db.Integer, primary_key=True)
+	co2 = db.Column(db.Integer, nullable=False)
+	humidity = db.Column(db.Integer, nullable=False)
+	temperature = db.Column(db.Integer, nullable=False)
+	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
+	timestamp = db.Column(
+		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
+	)
+class ClimateLiveDataModel(db.Model):
+	__tablename__ = 'climate_live_reads'
+	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	co2 = db.Column(db.Integer, nullable=False)
 	humidity = db.Column(db.Integer, nullable=False)
 	temperature = db.Column(db.Integer, nullable=False)

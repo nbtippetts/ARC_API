@@ -1,54 +1,17 @@
 import requests
+from time import sleep
+import random
 
 url = "http://localhost:5000/climate/log"
-payload = [
-	{
-		"co2": 500,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 1034,
-		"humidity": 22,
-		"temperature": 80
-	},
-	{
-		"co2": 888,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 666,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 999,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 789,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 589,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 1200,
-		"humidity": 20,
-		"temperature": 80
-	},
-	{
-		"co2": 1100,
-		"humidity": 20,
-		"temperature": 80
-	},
-]
-
-for p in payload:
-	response = requests.get(url, params=p)
+while True:
+	co2 = random.randint(500, 2000)
+	hum = random.randint(10, 60)
+	temp = random.randint(50, 95)
+	payload = {
+		"co2": co2,
+		"humidity": hum,
+		"temperature": temp
+	}
+	response = requests.get(url, params=payload)
 	print(response.json())
+	sleep(5)

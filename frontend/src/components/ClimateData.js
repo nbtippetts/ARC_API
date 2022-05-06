@@ -1,28 +1,38 @@
-import React, {useState} from 'react'
-import { io } from 'socket.io-client'
+import React, {useState, useEffect} from 'react'
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import OpacityIcon from '@mui/icons-material/Opacity';
 import Co2Icon from '@mui/icons-material/Co2';
-export const ClimateData = () => {
-	// const [co2Data, setCo2Data]=useState("")
-	// const [humidityData, setHumidityData]=useState("")
-	// const [temperatureData, setTemperatureData]=useState("")
-	// const socket = io();
-	// socket.connect('http://127.0.0.1/5000')
-	// socket.on('connect',function() {
-	// 	socket.send()
-	// })
-	// socket.on('message',function(e) {
-	// 	var data = JSON.parse(e)
-	// 	setCo2Data(data.co2)
-	// 	setHumidityData(data.humidity)
-	// 	setTemperatureData(data.temperature)
-	// })
+import axios from 'axios';
+export const ClimateData = (props) => {
+	const id = props.ipId
+	const [co2Data, setCo2Data]=useState("")
+	const [humidityData, setHumidityData]=useState("")
+	const [temperatureData, setTemperatureData]=useState("")
+	const fetchClimateReads = async () => {
+			const response = await axios
+			.get(`/climate/reads/${id}`)
+			.catch((err) => {
+				console.log("Err: ", err);
+			});
+			if (response.status === 200) {
+				setCo2Data(response.data.co2)
+				setHumidityData(response.data.humidity)
+				setTemperatureData(response.data.temperature)
+			} else {
+			}
+		}
+	useEffect(()=>{
+		fetchClimateReads()
+		const interval=setInterval(()=>{
+		fetchClimateReads()
+		},6000)
+     return()=>clearInterval(interval)
+},[])
   return (
 	<div>
-		{/* <Stack spacing={1}>
+		<Stack spacing={1}>
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
@@ -38,7 +48,7 @@ export const ClimateData = () => {
 			variant={"caption"}>
 				<ThermostatIcon/> {temperatureData}&#8457;
 		</Typography>
-		</Stack> */}
+		</Stack>
 	</div>
   )
 }

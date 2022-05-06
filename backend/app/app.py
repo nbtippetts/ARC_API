@@ -1,6 +1,5 @@
 from app.config import env_config
 from email.policy import default
-from flask_socketio import SocketIO
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import Api
@@ -27,7 +26,6 @@ api = Api()
 db = SQLAlchemy()
 migrate = Migrate()
 ma = Marshmallow()
-socketio = SocketIO()
 cors = CORS()
 jobstores = {
 		#  'default': SQLAlchemyJobStore(url="mysql+pymysql://root:{}@localhost/arc_db".format(urllib.parse.quote_plus("@Wicked2009")))
@@ -82,11 +80,10 @@ def create_app(config_name):
 	db.init_app(app)
 	db.app = app
 	with app.app_context():
-		from app.models import RoomModel, IPModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel, NoteBookModel
+		from app.models import RoomModel, IPModel, ClimateLiveDataModel, ClimateScheduleModel, ClimateIntervalModel, ClimateModel, ClimateDayNightModel, ClimateScheduleLogModel, ClimateLogModel, NoteBookModel
 		db.create_all()
 	migrate.init_app(app, db)
 	ma.init_app(app)
-	socketio.init_app(app, cors_allowed_origins="*")
 	cors.init_app(app)
 	appscheduler.start()
 	return app
