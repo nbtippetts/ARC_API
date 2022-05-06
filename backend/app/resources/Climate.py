@@ -102,11 +102,6 @@ class ClimateParameters(Resource):
 		ips = IPModel.query.filter_by(name='Climate', room=rooms).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(ips))
-		results = ClimateModel.query.filter_by(
-			climate_id=climate_parameter_id, room=rooms).first()
-		if results:
-			abort(409, message="Climate {} already exist".format(climate_parameter_id))
-
 		check_interval = ClimateIntervalModel.query.filter(
 			ClimateIntervalModel.name.in_(['Exhaust', 'Humidity', 'CO2'])).all()
 		if check_interval:
@@ -153,7 +148,6 @@ class ClimateParameters(Resource):
 					check_ip_state(ips)
 
 		climate = ClimateModel(
-			climate_id=climate_parameter_id,
 			name=args['name'],
 			co2_parameters=args['co2_parameters'],
 			humidity_parameters=args['humidity_parameters'],

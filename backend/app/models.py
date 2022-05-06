@@ -45,7 +45,7 @@ class IPModel(db.Model):
 
 class ClimateScheduleModel(db.Model):
 	__tablename__ = 'climate_schedule'
-	climate_schedule_id = db.Column(db.Integer, primary_key=True)
+	climate_schedule_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	name = db.Column(db.String(100), nullable=False)
 	start_time = db.Column(db.String(100), nullable=False)
 	end_time = db.Column(db.String(100), nullable=False)
@@ -59,7 +59,7 @@ class ClimateScheduleModel(db.Model):
 
 class ClimateIntervalModel(db.Model):
 	__tablename__ = 'climate_interval'
-	climate_interval_id = db.Column(db.Integer, primary_key=True)
+	climate_interval_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	name = db.Column(db.String(100), nullable=False)
 	interval_hour = db.Column(db.Integer, default=0, nullable=False)
 	interval_minute = db.Column(db.Integer, default=0, nullable=False)
@@ -74,7 +74,7 @@ class ClimateIntervalModel(db.Model):
 
 class ClimateModel(db.Model):
 	__tablename__ = 'climate'
-	climate_id = db.Column(db.Integer, primary_key=True)
+	climate_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	name = db.Column(db.String(100), nullable=False)
 	co2_parameters = db.Column(db.Integer, nullable=False)
 	humidity_parameters = db.Column(db.Integer, nullable=False)
@@ -95,7 +95,7 @@ class ClimateModel(db.Model):
 
 class ClimateDayNightModel(db.Model):
 	__tablename__ = 'climate_day_night'
-	id = db.Column(db.Integer, primary_key=True)
+	id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	climate_start_time = db.Column(db.Time, default=None)
 	climate_end_time = db.Column(db.Time, default=None)
 	climate_id = db.Column(db.Integer, db.ForeignKey('climate.climate_id'))
@@ -106,7 +106,7 @@ class ClimateDayNightModel(db.Model):
 
 class ClimateScheduleLogModel(db.Model):
 	__tablename__ = 'climate_schedule_log'
-	climate_schedule_log_id = db.Column(db.Integer, primary_key=True)
+	climate_schedule_log_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	name = db.Column(db.String(100), nullable=False)
 	start_time = db.Column(db.String(100), nullable=False)
 	end_time = db.Column(db.String(100), nullable=False)
@@ -119,7 +119,7 @@ class ClimateScheduleLogModel(db.Model):
 
 class ClimateLogModel(db.Model):
 	__tablename__ = 'climate_log'
-	climate_log_id = db.Column(db.Integer, primary_key=True)
+	climate_log_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	co2 = db.Column(db.Integer, nullable=False)
 	humidity = db.Column(db.Integer, nullable=False)
 	temperature = db.Column(db.Integer, nullable=False)
@@ -129,7 +129,7 @@ class ClimateLogModel(db.Model):
 	)
 class ClimateLiveDataModel(db.Model):
 	__tablename__ = 'climate_live_reads'
-	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+	id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	co2 = db.Column(db.Integer, nullable=False)
 	humidity = db.Column(db.Integer, nullable=False)
 	temperature = db.Column(db.Integer, nullable=False)
@@ -141,7 +141,7 @@ class ClimateLiveDataModel(db.Model):
 
 class NoteBookModel(db.Model):
 	__tablename__ = 'notebook'
-	notebook_id = db.Column(db.Integer, primary_key=True)
+	notebook_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
 	title = db.Column(db.String(100), nullable=False)
 	body = db.Column(db.String(800), nullable=False)
 	publish_date = db.Column(db.String(100), nullable=False)

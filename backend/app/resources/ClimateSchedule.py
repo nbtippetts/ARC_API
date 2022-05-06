@@ -126,14 +126,10 @@ class RelaySchedule(Resource):
 			db.session.commit()
 			if ip_id.state:
 				check_ip_state(ip_id)
-		results = ClimateScheduleModel.query.filter_by(
-			climate_schedule_id=schedule_id, IP=ip_id, room=rooms).first()
-		if results:
-			abort(409, message="Schedule {} already exist".format(schedule_id))
+
 		start_display = args['start_time'].strftime("%I:%M %p")
 		end_display = args['end_time'].strftime("%I:%M %p")
-		schedule = ClimateScheduleModel(climate_schedule_id=schedule_id,
-                                  name=args['name'], start_time=start_display, end_time=end_display, how_often=args['how_often'], IP=ip_id, room=rooms)
+		schedule = ClimateScheduleModel(name=args['name'], start_time=start_display, end_time=end_display, how_often=args['how_often'], IP=ip_id, room=rooms)
 		try:
 			db.session.add(schedule)
 			db.session.commit()
@@ -148,9 +144,9 @@ class RelaySchedule(Resource):
 
 		start_triggers = CronTrigger(hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(hour=end_hour, minute=end_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=[
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule.climate_schedule_id}-start', args=[
                     'low', schedule.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=[
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule.climate_schedule_id}-end', args=[
                     'high', schedule.IP.ip], replace_existing=True)
 		return schedule, 201
 

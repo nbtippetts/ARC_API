@@ -59,19 +59,6 @@ const AddClimate = (props) => {
 				ips.temperatureIp=ip.ip
 			}
 		})
-		const climateResponse = await axios
-		.get("/climate_parameters")
-		.catch((err) => {
-			console.log("Err: ", err);
-		});
-		if (climateResponse.status === 200) {
-			if(climateResponse.data.length === 0){
-				var climateId=1
-			} else {
-				// eslint-disable-next-line no-redeclare
-				var climateId=climateResponse.data.length+1
-			}
-		}
 		var payload = {
 			name:'test',
 			buffer_parameters:buffer,
@@ -85,7 +72,7 @@ const AddClimate = (props) => {
 			humidity_relay_ip:ips.humidityIp,
 			exhaust_relay_ip:ips.temperatureIp
 		}
-
+		const climateId=0
 		const response = await axios
 		.put("/room/"+roomId+"/climate/"+climateId,payload)
 		.catch((err) => {

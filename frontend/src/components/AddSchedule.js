@@ -43,19 +43,6 @@ const AddSchedule = (props) => {
 
   	let handleSchedule = async (e) => {
 		e.preventDefault();
-		const scheduleResponse = await axios
-		.get("/relayschedule")
-		.catch((err) => {
-			console.log("Err: ", err);
-		});
-		if (scheduleResponse.status === 200) {
-			if(scheduleResponse.data.length === 0){
-				var scheduleId=1
-			} else {
-				// eslint-disable-next-line no-redeclare
-				var scheduleId=scheduleResponse.data.length+1
-			}
-		}
 		const payload = {
 			name: name,
 			start_time: start.toLocaleString() + '',
@@ -63,6 +50,7 @@ const AddSchedule = (props) => {
 			how_often: '*',
 			ip_id: ipId
 		}
+		const scheduleId=0
 		const response = await axios
 		.put("/room/"+roomId+"/relayschedule/"+scheduleId,payload)
 		.catch((err) => {

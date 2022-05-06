@@ -47,19 +47,6 @@ const AddInterval = (props) => {
 
   	let handleInterval = async (e) => {
 		e.preventDefault();
-		const intervalResponse = await axios
-		.get("/relayinterval")
-		.catch((err) => {
-			console.log("Err: ", err);
-		});
-		if (intervalResponse.status === 200) {
-			if(intervalResponse.data.length === 0){
-				var intervalId=1
-			} else {
-				// eslint-disable-next-line no-redeclare
-				var intervalId=intervalResponse.data.length+1
-			}
-		}
 		const payload = {
 			name: name,
 			duration_hour: duration.hours,
@@ -68,6 +55,7 @@ const AddInterval = (props) => {
 			interval_minute:howOften.minutes,
 			ip_id: ipId
 		}
+		const intervalId=0
 		const response = await axios
 		.put("/room/"+roomId+"/relayinterval/"+intervalId,payload)
 		.catch((err) => {
