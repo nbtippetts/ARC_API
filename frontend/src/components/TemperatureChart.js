@@ -9,18 +9,18 @@ export const TemperatureChart = () => {
 		margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
 		<defs>
 			<linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-			<stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-			<stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+			<stop offset="5%" stopColor="#ef5350" stopOpacity={0.8}/>
+			<stop offset="95%" stopColor="#ef5350" stopOpacity={0}/>
 			</linearGradient>
-			<linearGradient id="colorPv" x1="0" y1="0" x2="0" y2="1">
-			<stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-			<stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+			<linearGradient id="TemperatureColorPv" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="5%" stopColor="#f44336" stopOpacity={0.8}/>
+			<stop offset="95%" stopColor="#f44336" stopOpacity={0}/>
 			</linearGradient>
 		</defs>
 
 
 		<Tooltip />
-		<Area type="monotone" dataKey="temperature" stroke="#82ca9d" fillOpacity={1} fill="url(#colorPv)" />
+		<Area type="monotone" dataKey="temperature" stroke="#f44336" fillOpacity={1} fill="url(#TemperatureColorPv)" />
 		</AreaChart>
 		</ResponsiveContainer>
 	)

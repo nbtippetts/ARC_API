@@ -32,7 +32,7 @@ export const ClimateData = (props) => {
 },[])
   return (
 	<div>
-		<Stack spacing={1}>
+		<Stack spacing={2} direction="row" justifyContent="space-around">
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>

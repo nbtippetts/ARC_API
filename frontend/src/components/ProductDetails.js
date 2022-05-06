@@ -147,7 +147,7 @@ const ProductDetails = () => {
 		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
 		<Grid item xs={12} sm={12} md={8}>
 			<Grid container spacing={3}>
-				<Grid item xs={11} sm={11} md={12}>
+				<Grid item xs={12}>
 						<ClimateChart />
 				</Grid>
 				<Grid item xs={12}>

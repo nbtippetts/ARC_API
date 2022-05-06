@@ -2,6 +2,7 @@ import React from "react";
 import { DataGrid } from '@mui/x-data-grid'
 import { useSelector } from "react-redux";
 export const ScheduleLogs = () => {
+	const [pageSize, setPageSize] = React.useState(5);
 	const logs = useSelector((state) => state.allScheduleLogs.scheduleLogs);
 		const columns = [
 		{ field: 'climate_schedule_log_id', headerName: 'ID', width: 20 },
@@ -11,6 +12,12 @@ export const ScheduleLogs = () => {
 		{ field: 'timestamp', headerName: 'Timestamp', flex:1, width: 130 },
 	]
 	return (
-		<DataGrid autoHeight getRowId={(logs) => logs.climate_schedule_log_id} rows={logs} columns={columns} pageSize={25} />
+		<div style={{ height: 400, width: '100%' }}>
+
+		<DataGrid autoHeight getRowId={(logs) => logs.climate_schedule_log_id} rows={logs} columns={columns} pageSize={pageSize}
+				onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+				rowsPerPageOptions={[5, 10, 25, 50, 100]}
+				pagination />
+		</div>
 	)
 }
