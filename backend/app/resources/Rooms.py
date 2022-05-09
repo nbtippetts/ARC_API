@@ -123,6 +123,7 @@ climate_log_marshaller = {
 	'co2': fields.Integer,
 	'humidity': fields.Integer,
 	'temperature': fields.Integer,
+	'vpd': fields.Float,
 	'timestamp': fields.String,
 	'ip_id': fields.Integer,
 }
@@ -171,7 +172,7 @@ class IPLogs(Resource):
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		climate_schedule_log = [p.climate_schedule_log[:100] for p in IPModel.query.filter_by(room=rooms).all() if p.climate_schedule_log]
+		climate_schedule_log = [p.climate_schedule_log for p in IPModel.query.filter_by(room=rooms).limit(100).all() if p.climate_schedule_log]
 		all_schedule_logs=[]
 		if len(climate_schedule_log) > 0:
 			for log in climate_schedule_log:
@@ -195,7 +196,7 @@ class IPChartLogs(Resource):
 		if not rooms:
 			abort(409, message="Room {} does not exist".format(room_id))
 
-		climate_log = [p.climate_log[:100]for p in IPModel.query.filter_by(room=rooms).all() if p.climate_log]
+		climate_log = [p.climate_log for p in IPModel.query.filter_by(room=rooms).limit(100).all() if p.climate_log]
 		if len(climate_log) > 0:
 			for log in climate_log[0]:
 				log.timestamp = log.timestamp.strftime('%d %b, %I:%M %p')

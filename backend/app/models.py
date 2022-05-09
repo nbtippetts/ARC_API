@@ -123,6 +123,7 @@ class ClimateLogModel(db.Model):
 	co2 = db.Column(db.Integer, nullable=False)
 	humidity = db.Column(db.Integer, nullable=False)
 	temperature = db.Column(db.Integer, nullable=False)
+	vpd = db.Column(db.Float, nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
@@ -133,6 +134,7 @@ class ClimateLiveDataModel(db.Model):
 	co2 = db.Column(db.Integer, nullable=False)
 	humidity = db.Column(db.Integer, nullable=False)
 	temperature = db.Column(db.Integer, nullable=False)
+	vpd = db.Column(db.Float, nullable=False)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT

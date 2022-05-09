@@ -10,6 +10,7 @@ export const ClimateData = (props) => {
 	const [co2Data, setCo2Data]=useState("")
 	const [humidityData, setHumidityData]=useState("")
 	const [temperatureData, setTemperatureData]=useState("")
+	const [vpdData, setVpdData]=useState("")
 	const fetchClimateReads = async () => {
 			const response = await axios
 			.get(`/climate/reads/${id}`)
@@ -20,6 +21,7 @@ export const ClimateData = (props) => {
 				setCo2Data(response.data.co2)
 				setHumidityData(response.data.humidity)
 				setTemperatureData(response.data.temperature)
+				setVpdData(response.data.vpd)
 			} else {
 			}
 		}
@@ -47,6 +49,11 @@ export const ClimateData = (props) => {
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
 				<ThermostatIcon/> {temperatureData}&#8457;
+		</Typography>
+		<Typography
+			className={"MuiTypography--subheading"}
+			variant={"caption"}>
+				<OpacityIcon/>{vpdData} kPa
 		</Typography>
 		</Stack>
 	</div>

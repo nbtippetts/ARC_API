@@ -24,6 +24,7 @@ import { ScheduleLogs } from "./ScheduleLogs";
 import { Co2Chart } from "./Co2Chart";
 import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
+import { VpdChart } from "./VpdChart";
 import { makeStyles } from "@mui/styles";
 import { ClimateData } from "./ClimateData";
 import AddClimate from "./AddClimate";
@@ -38,9 +39,9 @@ const useStyles = makeStyles(theme => ({
     textAlign:"center"
   },
   overviewcard: {
+	height: "100%",
     display:"flex",
-	flexDirection: "column",
-    justifyContent:"center",
+	flexDirection: "column"
   }
 }));
 
@@ -105,29 +106,29 @@ const ProductDetails = () => {
 				<Grid container spacing={2}>
 				{product.ip.map((ip,ipIndex) => (
 				<Grid item xs={12} sm={6} md={4} align="center">
-					<Card elevation={3} sx={{ maxWidth: 345 }} align="left">
+					<Card elevation={3} sx={{ maxWidth: 400 }} align="left" className={classes.overviewcard}>
 						<CardActionArea>
 							<CardHeader action={
 									<RelayControl ip={ip.ip} />
 							}
 							title={ip.name}
 							subheader={
-								ip.name === "Climate" ? <CloudIcon/> :
-								ip.name === "Temperature" ? <ThermostatIcon/> :
-								ip.name === "Humidity" ? <OpacityIcon/> :
-								ip.name === "CO2" ? <Co2Icon/> :
-								ip.name === "Water" ? <ShowerIcon/> :
-								ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>
+								<Stack spacing={1}>
+									{ip.name === "Climate" ? <CloudIcon/> :
+									ip.name === "Temperature" ? <ThermostatIcon/> :
+									ip.name === "Humidity" ? <OpacityIcon/> :
+									ip.name === "CO2" ? <Co2Icon/> :
+									ip.name === "Water" ? <ShowerIcon/> :
+									ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>}
+									{ip.state.toString()}
+								</Stack>
 								}>
 							</CardHeader>
-						<CardContent className={classes.overviewcard}>
-							<Typography
-								className={"MuiTypography--subheading"}
-								 variant={"caption"}>{ip.state.toString()}
-							</Typography>
-						</CardContent>
 							{ip.name === "Climate" ?
+							<div>
 								<ClimateData ipId={ip.id}/>
+								<VpdChart/>
+							</div>
 							:<div></div>}
 							{ip.name === "CO2" ?
 								<Co2Chart/>

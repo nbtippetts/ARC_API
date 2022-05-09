@@ -6,7 +6,7 @@ from app.models import RoomModel, IPModel, ClimateLiveDataModel, ClimateSchedule
 from flask_restful import Resource, reqparse, abort, fields, marshal_with
 import logging
 from .utils import start_task, end_task, get_local_datetime, is_time_between, check_ip_state
-from time import sleep
+import math
 
 
 climate_day_night_marshaller = {
@@ -283,25 +283,27 @@ climate_parser.add_argument('temperature', type=float, help='Invalid Temperature
 class Climate(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
-		print(args)
-
-
 		# ips = IPModel.query.filter_by(ip='192.168.0.16').first()
 		print(request.remote_addr)
 		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(request.remote_addr))
+		vpd = ((6.1078*math.exp(17.08085*args['temperature']/(234.175+args['temperature'])))-(6.1078 *
+			math.exp(17.08085*args['temperature']/(234.175+args['temperature']))*(args['humidity']/100)))/10.
+		vpd=round(vpd,2)
+		fahrenheit = (args['temperature'] * 9/5) + 32
 		update_climate_reads = ClimateLiveDataModel.query.filter_by(IP=ips).first()
 		if update_climate_reads:
 			update_climate_reads.co2 = args['co2']
 			update_climate_reads.humidity = args['humidity']
-			update_climate_reads.temperature = args['temperature']
+			update_climate_reads.temperature = fahrenheit
+			update_climate_reads.vpd = vpd
 
 			db.session.add(update_climate_reads)
 			db.session.commit()
 		else:
 			climate_reads = ClimateLiveDataModel(
-				co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'],IP=ips)
+				co2=args['co2'], humidity=args['humidity'], temperature=fahrenheit,vpd=vpd,IP=ips)
 			db.session.add(climate_reads)
 			db.session.commit()
 		climate = ClimateModel.query.filter_by(IP=ips).all()
@@ -341,11 +343,11 @@ class Climate(Resource):
 			if climate.exhaust_relay_ip == 'False':
 				print('do nothing')
 			else:
-				if args['temperature'] >= temperature_buffer:
+				if fahrenheit >= temperature_buffer:
 					start_task('low', climate.exhaust_relay_ip)
-				elif args['temperature'] <= temperature_buffer and args['humidity'] >= humidity_plus:
+				elif fahrenheit <= temperature_buffer and args['humidity'] >= humidity_plus:
 					start_task('low', climate.exhaust_relay_ip)
-				elif args['temperature'] <= temperature_buffer:
+				elif fahrenheit <= temperature_buffer:
 					end_task('high', climate.exhaust_relay_ip)
 				else:
 					print('temp do nothing')
@@ -370,15 +372,18 @@ class Climate(Resource):
 class ClimateLog(Resource):
 	def get(self):
 		args = climate_parser.parse_args()
-		print(args)
 		# ips = IPModel.query.filter_by(ip='192.168.0.16').first()
 		print(request.remote_addr)
 		ips = IPModel.query.filter_by(ip=str(request.remote_addr)).first()
 		if not ips:
 			abort(409, message="IP {} does not exist".format(1))
 		log_timestamp = get_local_datetime()
+		vpd = ((6.1078*math.exp(17.08085*args['temperature']/(234.175+args['temperature'])))-(6.1078 *
+			math.exp(17.08085*args['temperature']/(234.175+args['temperature']))*(args['humidity']/100)))/10.
+		vpd = round(vpd, 2)
+		fahrenheit = (args['temperature'] * 9/5) + 32
 		climate_log = ClimateLogModel(
-			co2=args['co2'], humidity=args['humidity'], temperature=args['temperature'], timestamp=log_timestamp, IP=ips)
+			co2=args['co2'], humidity=args['humidity'], temperature=fahrenheit, vpd=vpd, timestamp=log_timestamp, IP=ips)
 		db.session.add(climate_log)
 		db.session.commit()
 		return 'SUCCESS', 200
@@ -389,6 +394,7 @@ climate_data_reads_marshaller = {
 	'co2': fields.String,
 	'humidity': fields.String,
 	'temperature': fields.Integer,
+	'vpd': fields.Float,
 }
 
 class ClimateReads(Resource):
