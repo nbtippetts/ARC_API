@@ -131,13 +131,22 @@ const ProductDetails = () => {
 							</div>
 							:<div></div>}
 							{ip.name === "CO2" ?
-								<Co2Chart/>
-							:<div></div>}
+								<div>
+									<CardContent></CardContent>
+									<Co2Chart/>
+								</div>
+								:<div></div>}
 							{ip.name === "Humidity" ?
-								<HumidityChart/>
-							:<div></div>}
+								<div>
+									<CardContent></CardContent>
+									<HumidityChart/>
+								</div>
+								:<div></div>}
 							{ip.name === "Temperature" ?
-								<TemperatureChart/>
+								<div>
+									<CardContent></CardContent>
+									<TemperatureChart/>
+								</div>
 							:<div></div>}
 						</CardActionArea>
 					</Card>
