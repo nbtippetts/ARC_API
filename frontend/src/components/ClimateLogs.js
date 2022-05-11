@@ -15,7 +15,6 @@ export const ClimateLogs = () => {
 	let climateColumns=[]
 	if (setColumns === true){
 		climateColumns = [
-					{ field: 'climate_log_id', headerName: 'ID', width: 20 },
 					{ field: 'humidity', headerName: 'humidity', flex: 1 ,width: 130 },
 					{ field: 'temperature', headerName: 'temperature', flex: 1 ,width: 130 },
 					{ field: 'vpd', headerName: 'vpd', flex: 1 ,width: 130 },
@@ -24,7 +23,6 @@ export const ClimateLogs = () => {
 
 	} else {
 		climateColumns = [
-					{ field: 'climate_log_id', headerName: 'ID', width: 20 },
 					{ field: 'co2', headerName: 'CO2', flex: 1 ,width: 130 },
 					{ field: 'humidity', headerName: 'humidity', flex: 1 ,width: 130 },
 					{ field: 'temperature', headerName: 'temperature', flex: 1 ,width: 130 },

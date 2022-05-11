@@ -5,7 +5,6 @@ export const ScheduleLogs = () => {
 	const [pageSize, setPageSize] = React.useState(5);
 	const logs = useSelector((state) => state.allScheduleLogs.scheduleLogs);
 		const columns = [
-		{ field: 'climate_schedule_log_id', headerName: 'ID', width: 20 },
 		{ field: 'name', headerName: 'Name', flex:1, width: 130 },
 		{ field: 'start_time', headerName: 'Start', flex:1, width: 130 },
 		{ field: 'end_time', headerName: 'End', flex:1, width: 130 },
