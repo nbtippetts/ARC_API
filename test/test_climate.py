@@ -14,6 +14,7 @@ import random
 # 	'humidity_relay_ip': '192.168.0.666',
 # 	'exhaust_relay_ip': '192.168.0.69'
 # }
+# url = "http://127.0.0.1:5000/sht_climate"
 url = "http://127.0.0.1:5000/climate"
 while True:
     co2 = random.randint(500, 2000)

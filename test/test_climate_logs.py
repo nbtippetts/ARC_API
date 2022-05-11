@@ -2,6 +2,7 @@ import requests
 from time import sleep
 import random
 
+# url = "http://localhost:5000/sht_climate/log"
 url = "http://localhost:5000/climate/log"
 while True:
 	co2 = random.randint(900, 1300)

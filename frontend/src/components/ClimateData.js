@@ -18,10 +18,17 @@ export const ClimateData = (props) => {
 				console.log("Err: ", err);
 			});
 			if (response.status === 200) {
-				setCo2Data(response.data.co2)
-				setHumidityData(response.data.humidity)
-				setTemperatureData(response.data.temperature)
-				setVpdData(response.data.vpd)
+				if (response.data.co2 === null) {
+					setCo2Data("")
+					setHumidityData(response.data.humidity)
+					setTemperatureData(response.data.temperature)
+					setVpdData(response.data.vpd)
+				} else {
+					setCo2Data(response.data.co2)
+					setHumidityData(response.data.humidity)
+					setTemperatureData(response.data.temperature)
+					setVpdData(response.data.vpd)
+				}
 			} else {
 			}
 		}
@@ -35,11 +42,14 @@ export const ClimateData = (props) => {
   return (
 	<div>
 		<Stack spacing={2} direction="row" justifyContent="space-around">
+		{co2Data === "" ?
+			<div style={{display:"none"}}></div>
+		:
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
 				<Co2Icon/> {co2Data}ppm
-		</Typography>
+		</Typography>}
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>

@@ -120,10 +120,10 @@ class ClimateScheduleLogModel(db.Model):
 class ClimateLogModel(db.Model):
 	__tablename__ = 'climate_log'
 	climate_log_id = db.Column(db.Integer, primary_key=True,autoincrement=True)
-	co2 = db.Column(db.Integer, nullable=False)
-	humidity = db.Column(db.Integer, nullable=False)
-	temperature = db.Column(db.Integer, nullable=False)
-	vpd = db.Column(db.Float, nullable=False)
+	co2 = db.Column(db.Integer)
+	humidity = db.Column(db.Integer)
+	temperature = db.Column(db.Integer)
+	vpd = db.Column(db.Float)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT
@@ -131,10 +131,10 @@ class ClimateLogModel(db.Model):
 class ClimateLiveDataModel(db.Model):
 	__tablename__ = 'climate_live_reads'
 	id = db.Column(db.Integer, primary_key=True,autoincrement=True)
-	co2 = db.Column(db.Integer, nullable=False)
-	humidity = db.Column(db.Integer, nullable=False)
-	temperature = db.Column(db.Integer, nullable=False)
-	vpd = db.Column(db.Float, nullable=False)
+	co2 = db.Column(db.Integer)
+	humidity = db.Column(db.Integer)
+	temperature = db.Column(db.Integer)
+	vpd = db.Column(db.Float)
 	ip_id = db.Column(db.Integer, db.ForeignKey('IP.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT

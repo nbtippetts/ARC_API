@@ -66,8 +66,18 @@ const ProductDetails = () => {
 				console.log("Err: ", err);
 			});
 			if (response.status === 200) {
-				dispatch(setClimateLogs(response.data.climate_log[0]));
-				const displayLogs = response.data.climate_log[0].slice(0,20)
+				let shtClimateLogs = response.data.climate_log[0]
+				let displayLogs = response.data.climate_log[0].slice(0,20)
+				const removeElemWithIdAndValue = (arr = []) => {
+					arr.map(value => {
+						if (value.co2 === 0) {
+							delete value['co2']
+						}
+					})
+				}
+				// removeElemWithIdAndValue(shtClimateLogs, 'co2', 0);
+				dispatch(setClimateLogs(shtClimateLogs));
+				removeElemWithIdAndValue(displayLogs, 'co2', 0);
 				dispatch(setChartLogs(displayLogs.reverse()));
 			} else {
 				dispatch(setClimateLogs([]));
