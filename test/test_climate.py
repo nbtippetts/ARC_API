@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter
 from time import sleep
 import random
 
@@ -15,6 +16,8 @@ import random
 # 	'exhaust_relay_ip': '192.168.0.69'
 # }
 # url = "http://127.0.0.1:5000/sht_climate"
+s = requests.Session()
+s.mount('http://', HTTPAdapter(max_retries=5))
 url = "http://127.0.0.1:5000/climate"
 while True:
     co2 = random.randint(500, 2000)
@@ -27,8 +30,7 @@ while True:
     }
 # response = requests.put(url, data=payload)
 # print(response.json())
-
-    response = requests.get(url, params=payload)
+    response = s.get(url, params=payload)
     print(response.json())
     sleep(5)
 

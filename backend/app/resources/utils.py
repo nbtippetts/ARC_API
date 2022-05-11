@@ -1,8 +1,9 @@
+from app.app import db
+from app.models import IPModel, ClimateScheduleLogModel
 from tzlocal import get_localzone
 from datetime import datetime
 import requests
-from app.app import db
-from app.models import IPModel, ClimateScheduleLogModel
+from requests.adapters import HTTPAdapter
 import logging
 
 def get_local_time():
@@ -60,8 +61,10 @@ def test_end_task(*args):
 
 def start_task(*args):
 	print(args)
+	s = requests.Session()
+	s.mount('http://', HTTPAdapter(max_retries=5))
 	url = f'http://{args[1]}/?v={args[0]}'
-	res = requests.get(url, timeout=5)
+	res = s.get(url,timeout=5)
 	logging.info(res)
 	if res.status_code == 200:
 		ip_state = IPModel.query.filter_by(ip=args[1]).first()
@@ -82,8 +85,10 @@ def start_task(*args):
 
 def end_task(*args):
 	print(args)
+	s = requests.Session()
+	s.mount('http://', HTTPAdapter(max_retries=5))
 	url = f'http://{args[1]}/?v={args[0]}'
-	res = requests.get(url, timeout=5)
+	res = s.get(url, timeout=5)
 	if res.status_code == 200:
 		ip_state = IPModel.query.filter_by(ip=args[1]).first()
 		logs = ClimateScheduleLogModel.query.filter_by(IP=ip_state).order_by(

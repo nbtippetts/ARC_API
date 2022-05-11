@@ -132,8 +132,8 @@ class RelayInterval(Resource):
 
 		start_triggers = IntervalTrigger(hours=args['interval_hour'], minutes=args['interval_minute'], jitter=1)
 		end_triggers = IntervalTrigger(hours=args['duration_hour'], minutes=args['duration_minute'])
-		appscheduler.add_job(start_task, start_triggers, id=f'{interval.climate_interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{interval.climate_interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval.climate_interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True,misfire_grace_time=1000)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval.climate_interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True,misfire_grace_time=1000)
 		return interval, 201
 
 	@marshal_with(resource_fields)
@@ -159,8 +159,8 @@ class RelayInterval(Resource):
 
 		start_triggers = IntervalTrigger(hours=args['interval_hour'], minutes=args['interval_minute'], jitter=1)
 		end_triggers = IntervalTrigger(hours=args['duration_hour'], minutes=args['duration_minute'])
-		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{interval_id}-interval-start', args=['low', interval.IP.ip], replace_existing=True,misfire_grace_time=1000)
+		appscheduler.add_job(end_task, end_triggers, id=f'{interval_id}-interval-end', args=['high', interval.IP.ip], replace_existing=True,misfire_grace_time=1000)
 		return interval, 201
 
 	def delete(self, room_id, interval_id):

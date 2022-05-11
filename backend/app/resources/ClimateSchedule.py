@@ -145,9 +145,9 @@ class RelaySchedule(Resource):
 		start_triggers = CronTrigger(hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(hour=end_hour, minute=end_minute)
 		appscheduler.add_job(start_task, start_triggers, id=f'{schedule.climate_schedule_id}-start', args=[
-                    'low', schedule.IP.ip], replace_existing=True)
+                    'low', schedule.IP.ip], replace_existing=True,misfire_grace_time=1000)
 		appscheduler.add_job(end_task, end_triggers, id=f'{schedule.climate_schedule_id}-end', args=[
-                    'high', schedule.IP.ip], replace_existing=True)
+                    'high', schedule.IP.ip], replace_existing=True,misfire_grace_time=1000)
 		return schedule, 201
 
 	@marshal_with(resource_fields)
@@ -180,8 +180,8 @@ class RelaySchedule(Resource):
 
 		start_triggers = CronTrigger(hour=start_hour, minute=start_minute)
 		end_triggers = CronTrigger(hour=end_hour, minute=end_minute)
-		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True)
-		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True)
+		appscheduler.add_job(start_task, start_triggers, id=f'{schedule_id}-start', args=['low', schedule.IP.ip], replace_existing=True,misfire_grace_time=1000)
+		appscheduler.add_job(end_task, end_triggers, id=f'{schedule_id}-end', args=['high', schedule.IP.ip], replace_existing=True,misfire_grace_time=1000)
 		return schedule, 201
 
 	def delete(self, room_id, schedule_id):
@@ -239,7 +239,7 @@ class RelayControl(Resource):
 		args = relay_parser.parse_args()
 		ips = IPModel.query.filter_by(ip=args["ip"]).first()
 		if not ips:
-			abort(409, message="IP {} does not exist".format(1))
+			abort(409, message="IP {} does not exist".format(args["ip"]))
 
 		if args["state"] == 'low':
 			start_task('low', args["ip"])
