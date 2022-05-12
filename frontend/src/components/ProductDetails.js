@@ -109,14 +109,16 @@ const ProductDetails = () => {
 
 	return (
 		<Container maxWidth={false}>
+			<Stack spacing={2}>
 			{Object.keys(product).length === 0 ? (
 				<div>...Loading</div>
 			) : (
-				<Stack spacing={2}>
-				<Grid container spacing={2}>
+		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
+			<Grid item xs={12} sm={4} md={4}>
+			<Grid container spacing={2} style={{ display: 'flex', flexWrap: 'wrap'}}>
 				{product.ip.map((ip,ipIndex) => (
-				<Grid item xs={12} sm={6} md={4} align="center">
-					<Card elevation={3} sx={{ maxWidth: 400 }} align="left" className={classes.overviewcard}>
+				<Grid item xs={12} sm={12} md={12} lg={6} align="center">
+					<Card elevation={3} sx={{ maxWidth: 300 }} align="left" className={classes.overviewcard}>
 						<CardActionArea>
 							<CardHeader action={
 									<RelayControl ip={ip.ip} />
@@ -162,11 +164,10 @@ const ProductDetails = () => {
 					</Card>
 					</Grid>
 				))}
-
-			</Grid>
-		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
-		<Grid item xs={12} sm={12} md={8}>
-			<Grid container spacing={3}>
+					</Grid>
+				</Grid>
+		<Grid item xs={12} sm={8} md={8}>
+			<Grid container spacing={2}>
 				<Grid item xs={12}>
 						<ClimateChart />
 				</Grid>
@@ -174,10 +175,7 @@ const ProductDetails = () => {
 						<AddClimate roomId={productId} roomIps={product.ip}/>
 						<ClimateTable />
 				</Grid>
-				<Grid item xs={12} sm={12} md={12} lg={6}>
-						<ScheduleLogs/>
-				</Grid>
-				<Grid item xs={12} sm={12} md={12} lg={6}>
+				<Grid item xs={12}>
 					<Stack spacing={2}>
 						<AddSchedule roomId={productId}/>
 						<ScheduleTable />
@@ -187,16 +185,18 @@ const ProductDetails = () => {
 					</Stack>
 				</Grid>
 			</Grid>
-
 			</Grid>
-			<Grid item xs={12} sm={12} md={4}>
-					<Grid style={{ display: 'flex'}}>
+			</Grid>
+			)}
+			<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
+				<Grid item xs={12} sm={6} md={6}>
+					<ScheduleLogs/>
+				</Grid>
+				<Grid item xs={12} sm={6} md={6}>
 						<ClimateLogs />
-					</Grid>
 				</Grid>
 			</Grid>
 			</Stack>
-			)}
 			</Container>
 	);
 };
