@@ -50,7 +50,19 @@ services:
     ports:
       # bind on our 5000 port because most people have 80, 8080 already bound
       - "5000:5000"
-
+  client:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: app-client
+    volumes:
+      - ./frontend:/app
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    depends_on:
+      - app
+    ports:
+      - "3000:3000"
 # volumes definition here
 volumes:
   # just a persistance data

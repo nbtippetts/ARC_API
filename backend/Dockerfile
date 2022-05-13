@@ -14,5 +14,5 @@ RUN pip install -r requirements.txt
 WORKDIR /app
 ADD . /app
 EXPOSE 5000
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "main:app"]
-# CMD ["python", "main.py"]
+# CMD ["gunicorn", "-b", "0.0.0.0:5000", "main:app"]
+CMD ["python", "main.py"]
