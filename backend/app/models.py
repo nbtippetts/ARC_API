@@ -28,15 +28,12 @@ class IPModel(db.Model):
 	name = db.Column(db.String(20), nullable=False)
 	state = db.Column(db.Boolean, default=False, nullable=False)
 	ip = db.Column(db.String(20), default='False', nullable=False)
-	climate_schedule = db.relationship(
-		'ClimateScheduleModel', cascade='all, delete', backref='IP', lazy='joined')
-	climate_interval = db.relationship(
-		'ClimateIntervalModel', cascade='all, delete', backref='IP', lazy='joined')
-	climate_schedule_log = db.relationship('ClimateScheduleLogModel', backref='IP',lazy='select', order_by='ClimateScheduleLogModel.climate_schedule_log_id.desc()')
+	climate_schedule = db.relationship('ClimateScheduleModel', cascade='all, delete', backref='IP', lazy='joined')
+	climate_interval = db.relationship('ClimateIntervalModel', cascade='all, delete', backref='IP', lazy='joined')
+	climate_schedule_log = db.relationship('ClimateScheduleLogModel', cascade='all, delete',backref='IP', lazy='select', order_by='ClimateScheduleLogModel.climate_schedule_log_id.desc()')
 	climate = db.relationship('ClimateModel', cascade='all, delete', backref='IP', lazy='joined')
-	climate_log = db.relationship('ClimateLogModel', backref='IP',lazy='select', order_by='ClimateLogModel.climate_log_id.desc()')
-	climate_reads = db.relationship(
-		'ClimateLiveDataModel', backref='IP', lazy='select')
+	climate_log = db.relationship('ClimateLogModel', cascade='all, delete',backref='IP', lazy='select', order_by='ClimateLogModel.climate_log_id.desc()')
+	climate_reads = db.relationship('ClimateLiveDataModel', cascade='all, delete', backref='IP', lazy='select')
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 	timestamp = db.Column(
 		db.DateTime, default=LOCAL_DT, onupdate=LOCAL_DT

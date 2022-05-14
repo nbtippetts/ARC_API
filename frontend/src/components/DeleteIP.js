@@ -1,7 +1,7 @@
 /* eslint-disable array-callback-return */
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setIP, removeSelectedProduct, removeSelectedIPProduct } from "../redux/actions/productsActions";
+import { removeSelectedProduct, removeSelectedIPProduct } from "../redux/actions/productsActions";
 import axios from "axios";
 import IconButton from '@mui/material/IconButton';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';

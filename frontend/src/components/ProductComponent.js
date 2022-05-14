@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import DeleteRoom from "./DeleteRoom";
 import AddIP from "./AddIP";
 import DeleteIP from "./DeleteIP";
+import PurgeIP from "./PurgeIP";
 import AddRoom from './AddRoom';
 import { Button, Stack, Card, CardHeader, CardActionArea, CardContent, Container,Typography,Grid} from '@mui/material';
 import IconButton from '@mui/material/IconButton';
@@ -113,7 +114,9 @@ const ProductComponent = () => {
 				<Grid item xs={12} sm={6} md={4}>
 				<Card elevation={3} sx={{ minWidth: 275 }}>
 					<CardActionArea>
-					<CardHeader
+					<CardHeader action={
+						<PurgeIP ipId={id} indexId={index}/>
+					}
 					title={name}
 					subheader={
 						name === "Climate" ? <CloudIcon/> :

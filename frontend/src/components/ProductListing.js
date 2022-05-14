@@ -13,9 +13,9 @@ const ProductPage = () => {
       .catch((err) => {
         console.log("Err: ", err);
       });
-      console.log(response)
       if(response != null){
-        dispatch(setProducts(response.data));
+        const productData = response.data;
+        dispatch(setProducts(productData));
       }
   };
   const fetchIPS = async () => {
@@ -25,7 +25,8 @@ const ProductPage = () => {
         console.log("Err: ", err);
       });
        if(response != null){
-         dispatch(setIPS(response.data));
+         const ipData = response.data;
+         dispatch(setIPS(ipData));
        }
   };
 

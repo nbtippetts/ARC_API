@@ -5,13 +5,13 @@ export const ScheduleLogs = () => {
 	const [pageSize, setPageSize] = React.useState(5);
 	const logs = useSelector((state) => state.allScheduleLogs.scheduleLogs);
 		const columns = [
-		{ field: 'name', headerName: 'Name', flex:1, width: 130 },
-		{ field: 'start_time', headerName: 'Start', flex:1, width: 130 },
-		{ field: 'end_time', headerName: 'End', flex:1, width: 130 },
-		{ field: 'timestamp', headerName: 'Timestamp', flex:1, width: 130 },
+		{ field: 'name', headerName: 'Name', flex:1 },
+		{ field: 'start_time', headerName: 'Start', flex:1 },
+		{ field: 'end_time', headerName: 'End', flex:1 },
+		{ field: 'timestamp', headerName: 'Date', flex:1 },
 	]
 	return (
-		<div style={{ height: 400, width: '100%' }}>
+		<div style={{ height: 'auto', overflow: "auto" }}>
 
 		<DataGrid autoHeight getRowId={(logs) => logs.climate_schedule_log_id} rows={logs} columns={columns} pageSize={pageSize}
 				onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}

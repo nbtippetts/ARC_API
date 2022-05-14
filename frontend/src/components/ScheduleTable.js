@@ -19,7 +19,7 @@ export default function ScheduleTable() {
 			<TableRow>
 				<TableCell>Name</TableCell>
 				<TableCell align="right">Start Time</TableCell>
-				<TableCell align="right">End Time&nbsp;(g)</TableCell>
+				<TableCell align="right">End Time</TableCell>
 				<TableCell align="right">Relay</TableCell>
 				<TableCell align="right">Actions</TableCell>
 			</TableRow>

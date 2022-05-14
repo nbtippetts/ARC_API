@@ -48,22 +48,30 @@ export const ClimateData = (props) => {
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
-				<Co2Icon/> {co2Data}ppm
+				<Stack spacing={2}>
+				<Co2Icon/>{co2Data}ppm
+				</Stack>
 		</Typography>}
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
+				<Stack spacing={2}>
 				<OpacityIcon/>{humidityData}%
+				</Stack>
 		</Typography>
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
-				<ThermostatIcon/> {temperatureData}&#8457;
+				<Stack spacing={2}>
+				<ThermostatIcon/>{temperatureData}&#8457;
+				</Stack>
 		</Typography>
 		<Typography
 			className={"MuiTypography--subheading"}
 			variant={"caption"}>
+				<Stack spacing={2}>
 				<OpacityIcon/>{vpdData} kPa
+				</Stack>
 		</Typography>
 		</Stack>
 	</div>

@@ -79,8 +79,7 @@ class IPLogs(Resource):
 
 
 log_chart_parser = reqparse.RequestParser()
-log_chart_parser.add_argument(
-	'datetimes', type=str, help='Invalid Datetimes', required=False)
+log_chart_parser.add_argument('datetimes', type=str, help='Invalid Datetimes', required=False)
 
 
 class IPChartLogs(Resource):
@@ -116,8 +115,18 @@ class AddIP(Resource):
 			db.session.commit()
 			return ip, 201
 
+class DeleteIP(Resource):
+	def delete(self,ip_id):
+		ip = IPModel.query.filter_by(id=ip_id).first()
+		if not ip:
+			abort(409, message="Room {} doesn't exist, cannot Delete.".format(ip_id))
+		db.session.delete(ip)
+		db.session.commit()
+		return '', 204
+
 
 api.add_resource(AddIP, '/ip')
+api.add_resource(DeleteIP, '/delete_ip/<int:ip_id>')
 api.add_resource(IPLogs, '/room/<int:room_id>/ip_logs')
 api.add_resource(IPChartLogs, '/room/<int:room_id>/ip_chart_logs')
 api.add_resource(IPList, '/all_ips')

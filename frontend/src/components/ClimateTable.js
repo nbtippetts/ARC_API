@@ -29,7 +29,7 @@ export default function ClimateTable() {
 				<TableCell align="right">Co2</TableCell>
 				<TableCell align="right">Humidity</TableCell>
 				<TableCell align="right">Exhaust</TableCell>
-				<TableCell align="right">buffer</TableCell>
+				<TableCell align="right">Buffer</TableCell>
 				<TableCell align="right">Night Start</TableCell>
 				<TableCell align="right">Night End</TableCell>
 				<TableCell align="right">Actions</TableCell>

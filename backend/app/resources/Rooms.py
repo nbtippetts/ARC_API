@@ -120,7 +120,7 @@ class RoomIP(Resource):
 		ips = IPModel.query.filter_by(id=ip_id, room=rooms).first()
 		return ips, 200
 
-	@marshal_with(resource_fields)
+	@marshal_with(ip_marshaller)
 	def patch(self, room_id, ip_id):
 		# args = ip_parser.parse_args()
 		rooms = RoomModel.query.filter_by(id=room_id).first()

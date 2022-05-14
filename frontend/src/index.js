@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from 'react-dom';
-import "./index.css";
 import App from "./App";
 import { Provider } from 'react-redux'
 import store from './redux/store'
@@ -23,7 +22,19 @@ const darkTheme = createTheme({
   },
   typography: {
 	  fontFamily: 'Helvetica Neue'
-  }
+  },
+  components: {
+    // Name of the component
+    MuiDataGrid: {
+      styleOverrides: {
+        // Name of the slot
+        root: {
+          // Some CSS
+          padding: '10px',
+        },
+      },
+    },
+  },
 });
 
 

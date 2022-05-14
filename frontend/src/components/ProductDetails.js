@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Stack, Card, CardHeader, CardActionArea, CardContent, Container,Typography,Grid} from '@mui/material';
+import { Stack, Card, CardHeader, CardActionArea, CardContent, Grid} from '@mui/material';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import OpacityIcon from '@mui/icons-material/Opacity';
 import ShowerIcon from '@mui/icons-material/Shower';
@@ -69,6 +69,7 @@ const ProductDetails = () => {
 				let shtClimateLogs = response.data.climate_log[0]
 				let displayLogs = response.data.climate_log[0].slice(0,20)
 				const removeElemWithIdAndValue = (arr = []) => {
+					// eslint-disable-next-line array-callback-return
 					arr.map(value => {
 						if (value.co2 === 0) {
 							delete value['co2']
@@ -108,8 +109,8 @@ const ProductDetails = () => {
 	}, [productId]);
 
 	return (
-		<Container maxWidth={false}>
-			<Stack spacing={2}>
+
+		<Stack spacing={2}>
 			{Object.keys(product).length === 0 ? (
 				<div>...Loading</div>
 			) : (
@@ -188,16 +189,15 @@ const ProductDetails = () => {
 			</Grid>
 			</Grid>
 			)}
-			<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
-				<Grid item xs={12} sm={6} md={6}>
-					<ScheduleLogs/>
-				</Grid>
+			<Grid container spacing={2} direction="row" justify="center" alignItems="stretch" style={{paddingRight:"16px"}}>
 				<Grid item xs={12} sm={6} md={6}>
 						<ClimateLogs />
 				</Grid>
+				<Grid item xs={12} sm={6} md={6}>
+					<ScheduleLogs/>
+				</Grid>
 			</Grid>
 			</Stack>
-			</Container>
 	);
 };
 
