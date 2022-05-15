@@ -13,11 +13,13 @@ wifi_parser.add_argument(
 class WifiConf(Resource):
 	def get(self):
 		args = wifi_parser.parse_args()
-		with open('/etc/netplan/50-cloud-init.yaml') as file:
+		# with open('backend/app/resources/wifi.yaml') as file:
+		with open('./wifi.yaml') as file:
 			wifi_conf = yaml.load(file, Loader=yaml.FullLoader)
-		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']] = wifi_conf['network']['wifis']['wlan0']['access-points'].pop('ARC_AP')
+		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']] = wifi_conf['network']['wifis']['wlan0']['access-points'].pop('SSID')
 		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']]['password'] = args['password']
 		print(wifi_conf)
+		# with open('backend/app/resources/complete_wifi.yaml', 'w') as file:
 		with open('/etc/netplan/50-cloud-init.yaml', 'w') as file:
 			documents = yaml.dump(wifi_conf, file)
 		try:
