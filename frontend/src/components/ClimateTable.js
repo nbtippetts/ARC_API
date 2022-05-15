@@ -19,7 +19,7 @@ export default function ClimateTable() {
 		return climateDate
   	}
 	return (
-		<TableContainer component={Paper}>
+		<TableContainer style={{borderRadius:"20px"}} component={Paper}>
 		<Table sx={{ minWidth: 650 }} aria-label="simple table">
 			<TableHead>
 			<TableRow>

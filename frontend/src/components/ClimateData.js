@@ -36,7 +36,7 @@ export const ClimateData = (props) => {
 		fetchClimateReads()
 		const interval=setInterval(()=>{
 		fetchClimateReads()
-		},6000)
+		},90000)
      return()=>clearInterval(interval)
 },[])
   return (

@@ -13,6 +13,13 @@ def get_local_time():
 	local_time = now_local_dt.strftime("%I:%M %p")
 	print(local_time)
 	return local_time
+def format_local_datetime():
+	local_tz = get_localzone()
+	now_dt = datetime.now()
+	now_local_dt = now_dt.replace(tzinfo=local_tz)
+	local_time = now_local_dt.strftime("%d %b, %I:%M %p")
+	print(local_time)
+	return local_time
 def get_local_datetime():
 	local_tz = get_localzone()
 	now_dt = datetime.now()

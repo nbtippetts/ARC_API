@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
+import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
@@ -13,6 +14,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { setClimates } from "../redux/actions/productsActions";
+import CloudIcon from '@mui/icons-material/Cloud';
 
 const AddClimate = (props) => {
 	let product = useSelector((state) => state.product);
@@ -89,13 +91,13 @@ const AddClimate = (props) => {
 
   return (
     <div>
-      <Button variant="outlined" onClick={handleClickOpen}>
+      <Button size="small" onClick={handleClickOpen}>
         Create Climate
       </Button>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Climate</DialogTitle>
+        <DialogTitle><Avatar><CloudIcon/></Avatar></DialogTitle>
 		<form onSubmit={handleClimate}>
-        <DialogContent>
+        <DialogContent align="center">
 		  <Stack spacing={3}>
           <DialogContentText>
             Create Your Climate

@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Stack, Card, CardHeader, CardActionArea, CardContent, Grid} from '@mui/material';
+import { Avatar, Stack, Card, CardHeader, CardActionArea, CardContent, Grid} from '@mui/material';
 import ThermostatIcon from '@mui/icons-material/Thermostat';
 import OpacityIcon from '@mui/icons-material/Opacity';
 import ShowerIcon from '@mui/icons-material/Shower';
@@ -15,6 +15,7 @@ import {
 	removeSelectedProduct
 } from "../redux/actions/productsActions";
 import { setScheduleLogs,setClimateLogs, setChartLogs } from '../redux/actions/climateLogActions';
+import { setNotes } from "../redux/actions/NoteBookActions";
 import AddInterval from "./AddInterval";
 import AddSchedule from "./AddSchedule";
 import IntervalTable from "./IntervalTable";
@@ -25,24 +26,29 @@ import { Co2Chart } from "./Co2Chart";
 import { HumidityChart } from "./HumidityChart";
 import { TemperatureChart } from "./TemperatureChart";
 import { VpdChart } from "./VpdChart";
-import { makeStyles } from "@mui/styles";
 import { ClimateData } from "./ClimateData";
 import AddClimate from "./AddClimate";
 import ClimateTable from "./ClimateTable";
 import { ClimateLogs } from "./ClimateLogs";
 import { RelayControl } from "./RelayControl";
+import NoteBook from "./NoteBook";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles(theme => ({
-  appBar: {
-    top: "auto",
-    bottom: 0,
-    textAlign:"center"
-  },
   overviewcard: {
 	height: "100%",
     display:"flex",
-	flexDirection: "column"
-  }
+	flexDirection: "column",
+		"&.MuiDataGrid-root .MuiPaper-root-MuiCard-root": {
+			transition: "box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms",
+			backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))",
+			overflow: "hidden",
+			borderRadius: "20px",
+			boxShadow: "rgb(90 114 123 / 11%) 0px 7px 30px 0px",
+			backgroundColor: "rgb(251, 150, 120)",
+			color: "white",
+		},
+	},
 }));
 
 const ProductDetails = () => {
@@ -85,6 +91,18 @@ const ProductDetails = () => {
 				dispatch(setChartLogs([]));
 			}
 		}
+		const fetchNotes = async (id) => {
+			const response = await axios
+			.get(`/room/${id}/note/1`)
+			.catch((err) => {
+				console.log("Err: ", err);
+			});
+			if (response.status === 200) {
+				dispatch(setNotes(response.data));
+			}  else {
+				dispatch(setNotes([]));
+			}
+		}
 		const fetchScheduleLogs = async (id) => {
 			const response = await axios
 			.get(`/room/${id}/ip_logs`)
@@ -103,6 +121,7 @@ const ProductDetails = () => {
 		fetchProductDetail(productId);
 		fetchScheduleLogs(productId);
 		fetchClimateLogs(productId);
+		fetchNotes(productId);
 		return () => {
 			dispatch(removeSelectedProduct());
 		};
@@ -116,27 +135,29 @@ const ProductDetails = () => {
 			) : (
 		<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
 			<Grid item xs={12} sm={4} md={4}>
-			<Grid container spacing={2} style={{ display: 'flex', flexWrap: 'wrap'}}>
+			<Grid container spacing={2} style={{ display: 'flex', flexWrap: 'wrap', padding: "10px"}}>
 				{product.ip.map((ip,ipIndex) => (
-				<Grid item xs={12} sm={12} md={12} lg={6} align="center">
-					<Card elevation={3} sx={{ maxWidth: 300 }} align="left" className={classes.overviewcard}>
+				<Grid item xs={12} sm={12} md={12} lg={6}>
+					<Card elevation={3} sx={{ maxWidth: 275}} align="center" style={{borderRadius:"20px"}} className={classes.overviewcard}>
 						<CardActionArea>
-							<CardHeader action={
+							<CardHeader
+								action={
 									<RelayControl ip={ip.ip} />
-							}
-							title={ip.name}
-							subheader={
-								<Stack spacing={1}>
-									{ip.name === "Climate" ? <CloudIcon/> :
-									ip.name === "Temperature" ? <ThermostatIcon/> :
-									ip.name === "Humidity" ? <OpacityIcon/> :
-									ip.name === "CO2" ? <Co2Icon/> :
-									ip.name === "Water" ? <ShowerIcon/> :
-									ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>}
-									{ip.state.toString()}
-								</Stack>
-								}>
+								}
+								avatar={
+									<Avatar>
+										{ip.name === "Climate" ? <CloudIcon/> :
+										ip.name === "Temperature" ? <ThermostatIcon/> :
+										ip.name === "Humidity" ? <OpacityIcon/> :
+										ip.name === "CO2" ? <Co2Icon/> :
+										ip.name === "Water" ? <ShowerIcon/> :
+										ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>}
+									</Avatar>
+								}
+								subheader={ip.name}
+								>
 							</CardHeader>
+							 {/* {ip.state.toString()} */}
 							{ip.name === "Climate" ?
 							<div>
 								<ClimateData ipId={ip.id}/>
@@ -170,7 +191,11 @@ const ProductDetails = () => {
 		<Grid item xs={12} sm={8} md={8}>
 			<Grid container spacing={2}>
 				<Grid item xs={12}>
-						<ClimateChart />
+					<Card elevation={3} align="center" style={{borderRadius:"20px"}}>
+						<CardContent>
+							<ClimateChart />
+						</CardContent>
+					</Card>
 				</Grid>
 				<Grid item xs={12}>
 						<AddClimate roomId={productId} roomIps={product.ip}/>
@@ -191,10 +216,13 @@ const ProductDetails = () => {
 			)}
 			<Grid container spacing={2} direction="row" justify="center" alignItems="stretch" style={{paddingRight:"16px"}}>
 				<Grid item xs={12} sm={6} md={6}>
+					<Stack spacing={2}>
 						<ClimateLogs />
+						<ScheduleLogs/>
+					</Stack>
 				</Grid>
 				<Grid item xs={12} sm={6} md={6}>
-					<ScheduleLogs/>
+					<NoteBook roomId={productId}/>
 				</Grid>
 			</Grid>
 			</Stack>

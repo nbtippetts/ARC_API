@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from 'react-dom';
+import "./index.css"
 import App from "./App";
 import { Provider } from 'react-redux'
 import store from './redux/store'
@@ -34,6 +35,59 @@ const darkTheme = createTheme({
         },
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        // Name of the slot
+        root: {
+          color: "black"
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        // Name of the slot
+        root: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      },
+    },
+    // MuiButton: {
+    //   styleOverrides: {
+    //     // Name of the slot
+    //     root: {
+    //       display: "inline-flex",
+    //       alignItems: "center",
+    //       justifyContent: "center",
+    //       position: "relative",
+    //       boxSizing: "border-box",
+    //       outline: "0px",
+    //       border: "0px",
+    //       margin: "15px 0px 0px",
+    //       cursor: "pointer",
+    //       userSelect: "none",
+    //       verticalAlign: "middle",
+    //       appearance: "none",
+    //       textDecoration: "none",
+    //       fontWeight: "400",
+    //       lineHeight: "1.75",
+    //       minWidth: "64px",
+    //       padding: "6px 16px",
+    //       borderRadius: "5px",
+    //       transition: "all 0.3s ease 0s",
+    //       color: "rgb(255, 255, 255)",
+    //       backgroundColor: "rgb(3, 201, 215)",
+    //       textTransform: "none",
+    //       boxShadow: "none",
+    //       fontSize: "15px",
+    //       '&:hover': {
+    //           backgroundColor: 'red',
+    //           color: '#3c52b2',
+    //       },
+    //     },
+    //   },
+    // },
   },
 });
 

@@ -42,10 +42,10 @@ export const ClimateChart = () => {
 				</linearGradient>
 			</defs>
 
-		<XAxis dataKey="timestamp" />
-		<YAxis yAxisId="left" />
-		<YAxis yAxisId="right" orientation="right" domain={[0,140]}/>
-		<CartesianGrid strokeDasharray="3 3" />
+		<XAxis axisLine="false" dataKey="timestamp" />
+		<YAxis axisLine={false} yAxisId="left" />
+		<YAxis axisLine={false} yAxisId="right" orientation="right" domain={[0,140]}/>
+		{/* <CartesianGrid strokeDasharray="3 3" /> */}
 		<Tooltip />
 		<Area yAxisId="left" type="monotone" dataKey="co2" stroke="#82ca9d" fillOpacity={0.8} fill="url(#co2ColorPv)" />
 		<Area yAxisId="right" type="monotone" dataKey="humidity" stroke="#2196f3" fillOpacity={0.8} fill="url(#humidityColorPv)" />

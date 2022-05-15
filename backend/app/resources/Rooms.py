@@ -49,13 +49,19 @@ climate_marshaller = {
 	"climate_day_night": fields.List(fields.Nested(climate_day_night_marshaller))
 }
 
+notebook_marshaller = {
+	"notebook_id": fields.Integer,
+	"title": fields.String,
+	"body": fields.String,
+	"publish_date": fields.String
+}
 resource_fields = {
 	'id': fields.Integer,
 	'name': fields.String,
 	'climate_schedule': fields.Nested(climate_schedule_marshaller),
 	'climate_interval': fields.Nested(climate_interval_marshaller),
 	'climate': fields.Nested(climate_marshaller),
-	'notebook': fields.Nested(climate_schedule_marshaller),
+	'notebook': fields.Nested(notebook_marshaller),
 	'ip': fields.Nested(ip_marshaller),
 }
 # Define parser and request args

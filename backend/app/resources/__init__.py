@@ -1,1 +1,1 @@
-from . import Climate, ClimateParameters, ClimateInterval, ClimateSchedule, Rooms, IPController, RelayControl, utils
+from . import Climate, ClimateParameters, ClimateInterval, ClimateSchedule, Rooms, IPController, RelayControl, NoteBook, utils

@@ -12,6 +12,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Stack from '@mui/material/Stack';
 import DurationPicker from 'react-duration-picker'
 import { setIntervals } from "../redux/actions/productsActions";
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import Avatar from '@mui/material/Avatar';
 
 
 const AddInterval = (props) => {
@@ -78,11 +80,11 @@ const AddInterval = (props) => {
 
   return (
     <div>
-      <Button variant="outlined" onClick={handleClickOpen}>
+      <Button size="small" onClick={handleClickOpen}>
         Create Interval
       </Button>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Interval Schedule</DialogTitle>
+        <DialogTitle><Avatar><CalendarMonthRoundedIcon/></Avatar></DialogTitle>
 		<form onSubmit={handleInterval}>
         <DialogContent>
 		  <Stack spacing={3}>

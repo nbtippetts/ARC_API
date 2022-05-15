@@ -1,6 +1,7 @@
 import { combineReducers } from "redux";
 import { addProductReducer, productsReducer, selectedProductsReducer, ipsReducer, selectedIPSReducer} from "./productsReducer";
 import { scheduleLogsReducer,climateLogsReducer,chartLogsReducer, resetLogsReducer } from "./climateLogReducer";
+import { notesReducer,selectedNotesReducer } from "./noteReducer";
 const reducers = combineReducers({
   allProducts: productsReducer,
   product: selectedProductsReducer,
@@ -10,6 +11,8 @@ const reducers = combineReducers({
   allClimateLogs: climateLogsReducer,
   allScheduleLogs: scheduleLogsReducer,
   cardLogs: chartLogsReducer,
-  resetLogs:resetLogsReducer
+  resetLogs:resetLogsReducer,
+  notes:notesReducer,
+  note:selectedNotesReducer
 });
 export default reducers;

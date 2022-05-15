@@ -13,7 +13,7 @@ import UpdateSchedule from "./UpdateSchedule";
 export default function ScheduleTable() {
 	let product = useSelector((state) => state.product);
 	return (
-		<TableContainer component={Paper}>
+		<TableContainer style={{borderRadius:"20px"}} component={Paper}>
 		<Table sx={{ minWidth: 650 }} aria-label="simple table">
 			<TableHead>
 			<TableRow>

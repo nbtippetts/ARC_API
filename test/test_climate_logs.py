@@ -15,4 +15,4 @@ while True:
 	}
 	response = requests.get(url, params=payload)
 	print(response.json())
-	sleep(5)
+	sleep(1)

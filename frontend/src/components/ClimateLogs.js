@@ -19,7 +19,7 @@ const useStyles = makeStyles({
 });
 export const ClimateLogs = () => {
 	const classes = useStyles();
-	const [pageSize, setPageSize] = React.useState(15);
+	const [pageSize, setPageSize] = React.useState(5);
 	let setColumns = false
 	let logs = useSelector((state) => state.allClimateLogs.climateLogs);
 	for (var i = 0; i < logs.length; i++) {
@@ -53,7 +53,7 @@ export const ClimateLogs = () => {
 			<DataGrid className={classes.root} autoHeight getRowId={(logs) => logs.climate_log_id} rows={logs} columns={climateColumns}
 				 pageSize={pageSize}
 				onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-				rowsPerPageOptions={[15, 25, 50, 100]}
+				rowsPerPageOptions={[5, 10, 25, 50, 100]}
 				pagination />
 		</div>
 	)

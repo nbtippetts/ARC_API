@@ -15,6 +15,8 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { setSchedules } from "../redux/actions/productsActions";
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import Avatar from '@mui/material/Avatar';
 
 const AddSchedule = (props) => {
 	let product = useSelector((state) => state.product);
@@ -77,7 +79,7 @@ const AddSchedule = (props) => {
         Create Schedule
       </Button>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Schedule</DialogTitle>
+        <DialogTitle><Avatar><CalendarMonthRoundedIcon/></Avatar></DialogTitle>
 		<form onSubmit={handleSchedule}>
         <DialogContent>
 		  <Stack spacing={3}>
