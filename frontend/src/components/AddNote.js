@@ -68,9 +68,9 @@ const AddNote = (props) => {
 		handleNoteDate();
 	}, [noteDate]);
   return (
-<Grid container spacing={2} direction="row" justify="center" alignItems="stretch">
-	<Grid item xs={12}>
-	<Card elevation={3} align="left" style={{borderRadius:"20px", height:"100%"}}>
+<Grid container spacing={2} direction="row" justifyContent="space-around" alignItems="stretch">
+	<Grid item xs={12} sm={12} lg={6}>
+	<Card elevation={0} align="left" style={{borderRadius:"20px", height:"100%"}}>
       <CardHeader
 			action={
 					<IconButton variant="danger" onClick={handleNote}><AddCircleOutlineRoundedIcon/></IconButton>
@@ -102,7 +102,7 @@ const AddNote = (props) => {
 				onChange={handleBody}
 
 			/>
-		<Box>
+		<Box sx={{ display: { xs: 'block', md: 'block', lg: 'none' }}}>
 			<LocalizationProvider dateAdapter={AdapterDateFns}>
 				<StaticDatePicker
 					orientation="portrait"
@@ -118,6 +118,21 @@ const AddNote = (props) => {
 		</CardContent>
 	</Card>
 	</Grid>
+		<Box sx={{ display: { xs: 'none', md: 'none', lg: 'block' }}}>
+		<Grid item xs={12} sm={12} lg={6}>
+			<LocalizationProvider dateAdapter={AdapterDateFns}>
+				<StaticDatePicker
+					orientation="portrait"
+					openTo="day"
+					value={noteDate}
+					onChange={(newValue) => {
+						setNoteDate(newValue);
+					}}
+					renderInput={(params) => <TextField {...params} />}
+				/>
+			</LocalizationProvider>
+			</Grid>
+		</Box>
 </Grid>
   );
 

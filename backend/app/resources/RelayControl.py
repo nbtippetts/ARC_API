@@ -2,7 +2,7 @@ from app.app import api
 from app.models import IPModel
 from flask_restful import Resource, reqparse, abort
 import logging
-from .utils import start_task, end_task
+from .utils import start_task, end_task, test_start_task, test_end_task
 
 relay_parser = reqparse.RequestParser()
 relay_parser.add_argument('ip', type=str, help='Invalid IP')

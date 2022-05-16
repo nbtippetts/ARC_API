@@ -138,14 +138,16 @@ const ProductDetails = () => {
 			<Grid container spacing={2} style={{ display: 'flex', flexWrap: 'wrap', padding: "10px"}}>
 				{product.ip.map((ip,ipIndex) => (
 				<Grid item xs={12} sm={12} md={12} lg={6}>
-					<Card elevation={3} sx={{ maxWidth: 275}} align="center" style={{borderRadius:"20px"}} className={classes.overviewcard}>
+					<Card elevation={3}  align="center" style={{borderRadius:"20px"}} className={classes.overviewcard}>
 						<CardActionArea>
 							<CardHeader
 								action={
 									<RelayControl ip={ip.ip} />
 								}
 								avatar={
-									<Avatar>
+									<div>
+									{ip.state.toString() === "true" ?
+									<Avatar sx={{bgcolor:"#4caf50"}}>
 										{ip.name === "Climate" ? <CloudIcon/> :
 										ip.name === "Temperature" ? <ThermostatIcon/> :
 										ip.name === "Humidity" ? <OpacityIcon/> :
@@ -153,11 +155,20 @@ const ProductDetails = () => {
 										ip.name === "Water" ? <ShowerIcon/> :
 										ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>}
 									</Avatar>
+										:
+									<Avatar>
+										{ip.name === "Climate" ? <CloudIcon/> :
+										ip.name === "Temperature" ? <ThermostatIcon/> :
+										ip.name === "Humidity" ? <OpacityIcon/> :
+										ip.name === "CO2" ? <Co2Icon/> :
+										ip.name === "Water" ? <ShowerIcon/> :
+										ip.name === "Light" ? <LightbulbIcon/> : <QuestionMarkIcon/>}
+									</Avatar>}
+									</div>
 								}
 								subheader={ip.name}
 								>
 							</CardHeader>
-							 {/* {ip.state.toString()} */}
 							{ip.name === "Climate" ?
 							<div>
 								<ClimateData ipId={ip.id}/>
