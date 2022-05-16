@@ -7,8 +7,8 @@ payload = {
 	'password': 'largecartoon258',
 }
 
-url = f"http://127.0.0.1:5000/wifi"
-# url = f"http://http://192.168.1.42:5000/wifi"
+# url = f"http://127.0.0.1:5000/wifi"
+url = "http://192.168.1.42:5000/wifi"
 
 response = requests.get(url, params=payload)
 print(response.json())
