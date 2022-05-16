@@ -6,8 +6,8 @@ RUN mkdir /app
 WORKDIR /app
 # install and cache app dependencies
 COPY package.json /app/package.json
-RUN npm install --silent
 RUN mkdir node_modules/.cache && chmod -R 777 node_modules/.cache
+RUN npm install --silent
 COPY . /app
 EXPOSE 3000
 
