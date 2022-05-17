@@ -8,6 +8,7 @@ import {
 
 import ProductListing from './components/ProductListing';
 import ProductDetails from './components/ProductDetails';
+import { Network } from './components/Network';
 
 function App() {
 	return (
@@ -15,6 +16,7 @@ function App() {
 					<Routes>
 						<Route path='/' element={<ProductListing />}/>
               			<Route path="/room/:productId" element={<ProductDetails />} />
+              			<Route path="/network" element={<Network />} />
 					</Routes>
 			</Router>
 	);
