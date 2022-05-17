@@ -1,5 +1,5 @@
 import yaml
-import subprocess
+import os
 from flask_restful import Resource, reqparse, abort
 from app.app import api
 
@@ -18,14 +18,11 @@ class WifiConf(Resource):
 		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']] = wifi_conf['network']['wifis']['wlan0']['access-points'].pop('SSID')
 		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']]['password'] = args['password']
 		print(wifi_conf)
-		# with open('backend/app/resources/complete_wifi.yaml', 'w') as file:
 		with open('/etc/netplan/50-cloud-init.yaml', 'w') as file:
 			documents = yaml.dump(wifi_conf, file)
 		try:
-			gen = subprocess.run(["sudo", "netplan", "generate"], capture_output=True)
-			print(gen)
-			apply = subprocess.run(["sudo", "netplan", "apply"], capture_output=True)
-			print(apply)
+			gen = os.system("sudo netplan generate")
+			apply = os.system("sudo netplan apply")
 		except Exception as e:
 			print(e)
 			abort(409)
