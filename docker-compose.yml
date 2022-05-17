@@ -40,7 +40,7 @@ services:
     privileged: True
     volumes:
       - ./backend:/app
-      - /etc/netplan/50-cloud-init.yaml:/etc/netplan/50-cloud-init.yaml:ro
+      - /etc/netplan/50-cloud-init.yaml:/etc/netplan/50-cloud-init.yaml:rw
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     links:

@@ -13,8 +13,7 @@ wifi_parser.add_argument(
 class WifiConf(Resource):
 	def get(self):
 		args = wifi_parser.parse_args()
-		# with open('backend/app/resources/wifi.yaml') as file:
-		with open('./wifi.yaml') as file:
+		with open('app/resources/wifi.yaml') as file:
 			wifi_conf = yaml.load(file, Loader=yaml.FullLoader)
 		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']] = wifi_conf['network']['wifis']['wlan0']['access-points'].pop('SSID')
 		wifi_conf['network']['wifis']['wlan0']['access-points'][args['ssid']]['password'] = args['password']
