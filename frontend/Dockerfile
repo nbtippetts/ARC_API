@@ -10,8 +10,8 @@ COPY package.json /app/package.json
 RUN npm config set unsafe-perm true
 RUN npm install
 RUN npm install react-scripts@5.0.1 -g
-COPY . /app
 RUN mkdir /app/node_modules/.cache && chmod -R 777 /app/node_modules/.cache
+COPY . /app
 EXPOSE 3000
 
 ENTRYPOINT [ "npm" ]
