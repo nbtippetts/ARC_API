@@ -10,6 +10,7 @@ RUN mkdir /app/node_modules
 RUN chown -R node:node /app/node_modules
 RUN npm install
 RUN npm install react-scripts@5.0.1 -g
+RUN chmod a+x /app/node_modules/.bin/react-scripts
 COPY . /app
 EXPOSE 3000
 

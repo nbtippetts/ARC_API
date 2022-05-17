@@ -76,8 +76,9 @@ def start_task(*args):
 	if res.status_code == 200:
 		ip_state = IPModel.query.filter_by(ip=args[1]).first()
 		if ip_state.state == False:
-			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=get_local_time(
-			), end_time=get_local_time(), end_time_flag=True, IP=ip_state)
+			start=get_local_time()
+			end=get_local_time()
+			logs = ClimateScheduleLogModel(name=ip_state.name, start_time=start, end_time=end, end_time_flag=True, IP=ip_state)
 			db.session.add(logs)
 			db.session.commit()
 			ip_state.state = True
@@ -102,7 +103,8 @@ def end_task(*args):
 			ClimateScheduleLogModel.climate_schedule_log_id.desc()).first()
 		if logs.end_time_flag:
 			logs.end_time_flag = False
-			logs.end_time = get_local_time()
+			end = get_local_time()
+			logs.end_time = end
 			db.session.add(logs)
 			db.session.commit()
 			ip_state.state = False
