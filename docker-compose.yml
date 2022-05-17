@@ -59,7 +59,6 @@ services:
     image: app-client
     volumes:
       - ./frontend:/app
-      - '/app/node_modules'
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     depends_on:
