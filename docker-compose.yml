@@ -57,6 +57,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     image: app-client
+    restart: always
     volumes:
       - ./frontend:/app
       - /etc/localtime:/etc/localtime:ro
