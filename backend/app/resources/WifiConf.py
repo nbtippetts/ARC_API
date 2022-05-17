@@ -21,8 +21,8 @@ class WifiConf(Resource):
 		with open('/etc/netplan/50-cloud-init.yaml', 'w') as file:
 			documents = yaml.dump(wifi_conf, file)
 		try:
-			gen = os.system("sudo netplan generate")
-			apply = os.system("sudo netplan apply")
+			gen = os.system("netplan generate")
+			apply = os.system("netplan apply")
 		except Exception as e:
 			print(e)
 			abort(409)
