@@ -9,7 +9,7 @@ ENV PATH /app/node_modules/.bin:$PATH
 # install app dependencies
 COPY package.json ./
 RUN mkdir ./node_modules
-RUN chown -R node:node ./node_modules
+RUN chmod -R 777 ./node_modules
 RUN npm install
 RUN npm install react-scripts@5.0.1 -g
 COPY . /app
