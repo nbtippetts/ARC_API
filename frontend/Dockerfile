@@ -1,6 +1,5 @@
 # Build step #1: build the React front end
-FROM node:17-alpine as build-step
-
+FROM node:17-alpine
 # set working directory
 RUN mkdir /app
 WORKDIR /app
