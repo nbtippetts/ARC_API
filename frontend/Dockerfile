@@ -7,6 +7,7 @@ WORKDIR /app
 # install and cache app dependencies
 COPY package.json /app/package.json
 RUN npm install --silent
+RUN npm install react-scripts@5.0.1 -g
 RUN mkdir node_modules/.cache && chmod -R 777 node_modules/.cache
 COPY . /app
 EXPOSE 3000
