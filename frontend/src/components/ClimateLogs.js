@@ -23,7 +23,7 @@ export const ClimateLogs = () => {
 	let setColumns = false
 	let logs = useSelector((state) => state.allClimateLogs.climateLogs);
 	for (var i = 0; i < logs.length; i++) {
-		if (logs[i].co2 === 0) {
+		if (logs[i].co2 === 0 || logs[i].co2 === "" || logs[i].co2 === null) {
 			setColumns = true
 			break;
 		}
